@@ -9,6 +9,6 @@
 
 ## Initial Placeholder Setup
 
-- Light pieces start on the left two columns.
-- Dark pieces start on the right two columns.
-- Middle four columns start empty.
+- Light pieces start on columns 1 and 3.
+- Dark pieces start on columns 6 and 8.
+- The other columns start empty.
