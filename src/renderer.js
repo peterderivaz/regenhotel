@@ -32,6 +32,47 @@ window.Makyek.renderBoard = function renderBoard({
   }
 };
 
+window.Makyek.animateAiMove = function animateAiMove(boardElement, move, capturedSquares = []) {
+  const fromSquare = findSquare(boardElement, move.from);
+  const toSquare = findSquare(boardElement, move.to);
+  const movingPiece = fromSquare ? fromSquare.querySelector(".piece") : null;
+
+  if (!fromSquare || !toSquare || !movingPiece) {
+    return Promise.resolve();
+  }
+
+  const fromRect = movingPiece.getBoundingClientRect();
+  const toRect = toSquare.getBoundingClientRect();
+  const boardRect = boardElement.getBoundingClientRect();
+  const clone = movingPiece.cloneNode(true);
+  const deltaX = toRect.left + toRect.width / 2 - (fromRect.left + fromRect.width / 2);
+  const deltaY = toRect.top + toRect.height / 2 - (fromRect.top + fromRect.height / 2);
+
+  clone.classList.add("ai-moving-piece");
+  clone.style.left = `${fromRect.left - boardRect.left}px`;
+  clone.style.top = `${fromRect.top - boardRect.top}px`;
+  clone.style.width = `${fromRect.width}px`;
+  clone.style.height = `${fromRect.height}px`;
+  movingPiece.classList.add("ai-source-piece");
+  boardElement.append(clone);
+
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => {
+      clone.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+    });
+
+    window.setTimeout(() => {
+      markCapturedPieces(boardElement, capturedSquares);
+    }, 170);
+
+    window.setTimeout(() => {
+      movingPiece.classList.remove("ai-source-piece");
+      clone.remove();
+      resolve();
+    }, capturedSquares.length > 0 ? 560 : 360);
+  });
+};
+
 function createSquare(row, col) {
   const square = document.createElement("div");
   square.className = `square ${(row + col) % 2 === 0 ? "light" : "dark"}`;
@@ -105,6 +146,25 @@ function addDropHandlers(square, onMove, inputBlocked) {
 
     if (from) {
       onMove(from, to);
+    }
+  });
+}
+
+function findSquare(boardElement, square) {
+  return boardElement.querySelector(`[data-row="${square.row}"][data-col="${square.col}"]`);
+}
+
+function markCapturedPieces(boardElement, capturedSquares) {
+  capturedSquares.forEach((square) => {
+    const capturedSquare = findSquare(boardElement, square);
+    const capturedPiece = capturedSquare ? capturedSquare.querySelector(".piece") : null;
+
+    if (capturedSquare) {
+      capturedSquare.classList.add("capture-square");
+    }
+
+    if (capturedPiece) {
+      capturedPiece.classList.add("captured-piece");
     }
   });
 }

@@ -79,6 +79,7 @@ window.Makyek.createGame = function createGame() {
         return {
           ok: true,
           message: `${playerName(piece)} moved from ${fromLabel} to ${toLabel}, ${captureMessage(moveResult.captured)}, and won.`,
+          capturedSquares: moveResult.capturedSquares,
         };
       }
 
@@ -87,6 +88,7 @@ window.Makyek.createGame = function createGame() {
       return {
         ok: true,
         message: `${playerName(piece)} moved from ${fromLabel} to ${toLabel} and ${captureMessage(moveResult.captured)}. ${playerName(currentPlayer)} to move.`,
+        capturedSquares: moveResult.capturedSquares,
       };
     },
   };
@@ -154,12 +156,13 @@ window.Makyek.applyMove = function applyMove(board, move, player) {
   nextBoard[move.to.row][move.to.col] = player;
   nextBoard[move.from.row][move.from.col] = null;
 
-  const captured = capturePieces(nextBoard, move.to, player);
+  const capturedSquares = capturePieces(nextBoard, move.to, player);
   const opponent = otherPlayer(player);
 
   return {
     board: nextBoard,
-    captured,
+    captured: capturedSquares.length,
+    capturedSquares,
     winner: countPieces(nextBoard, opponent) === 0 ? player : null,
   };
 };
@@ -219,7 +222,7 @@ function capturePieces(board, movedTo, player) {
     board[square.row][square.col] = null;
   });
 
-  return captured.length;
+  return captured;
 }
 
 function getCustodianCaptures(board, movedTo, player, axis) {

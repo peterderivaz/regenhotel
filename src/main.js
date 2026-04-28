@@ -86,7 +86,7 @@ function scheduleAiMove() {
   statusElement.textContent = "Black AI is thinking...";
   draw();
 
-  aiTimer = window.setTimeout(() => {
+  aiTimer = window.setTimeout(async () => {
     const move = window.Makyek.chooseAiMove(game, {
       type: aiTypeSelect.value,
       depth: Number(aiDepthSelect.value),
@@ -101,6 +101,7 @@ function scheduleAiMove() {
 
     const result = game.movePiece(move.from, move.to);
     statusElement.textContent = `Black AI: ${result.message}`;
+    await window.Makyek.animateAiMove(boardElement, move, result.capturedSquares);
     draw();
     scheduleAiMove();
     schedulePondering();
