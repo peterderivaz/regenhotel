@@ -30,3 +30,4 @@
 - Greedy captures chooses the move with the strongest immediate capture and board score.
 - Minimax searches ahead up to the selected depth, using material and mobility to score boards.
 - White thinking shows the best White move found at each depth in different board colors and cancels when White moves.
+- Minimax caching can reuse previously searched positions keyed by board, side to move, perspective, and remaining depth.

@@ -6,6 +6,7 @@ const aiTypeSelect = document.querySelector("#ai-type");
 const aiDepthSelect = document.querySelector("#ai-depth");
 const ponderEnabledInput = document.querySelector("#ponder-enabled");
 const ponderDepthSelect = document.querySelector("#ponder-depth");
+const cacheEnabledInput = document.querySelector("#cache-enabled");
 
 const game = window.Makyek.createGame();
 let aiTimer = null;
@@ -54,6 +55,12 @@ aiEnabledInput.addEventListener("change", () => {
 
 aiTypeSelect.addEventListener("change", scheduleAiMove);
 aiDepthSelect.addEventListener("change", scheduleAiMove);
+cacheEnabledInput.addEventListener("change", () => {
+  clearPondering();
+  draw();
+  scheduleAiMove();
+  schedulePondering();
+});
 ponderEnabledInput.addEventListener("change", () => {
   clearPondering();
   draw();
@@ -83,6 +90,7 @@ function scheduleAiMove() {
     const move = window.Makyek.chooseAiMove(game, {
       type: aiTypeSelect.value,
       depth: Number(aiDepthSelect.value),
+      cacheEnabled: cacheEnabledInput.checked,
     });
 
     if (!move) {
@@ -133,7 +141,7 @@ function schedulePondering() {
   }
 
   ponderWorker.addEventListener("message", (event) => {
-    const { id, depth, result } = event.data;
+    const { id, depth, result, positionsPerSecond, cacheHits } = event.data;
 
     if (id !== ponderRunId || !shouldPonder()) {
       return;
@@ -149,7 +157,7 @@ function schedulePondering() {
       move: result.move,
       score: result.score,
     });
-    statusElement.textContent = `White hint depth ${depth}: ${formatMove(result.move)}.`;
+    statusElement.textContent = `White hint depth ${depth}: ${formatMove(result.move)}. ${formatRate(positionsPerSecond)} positions/s, ${formatCount(cacheHits)} cache hits.`;
     draw();
   });
   ponderWorker.addEventListener("error", () => {
@@ -165,6 +173,7 @@ function schedulePondering() {
     id: runId,
     board: game.board,
     maxDepth,
+    cacheEnabled: cacheEnabledInput.checked,
   });
 }
 
@@ -187,6 +196,30 @@ function clearPonderWorker() {
 
 function formatMove(move) {
   return `${window.Makyek.squareLabel(move.from)} to ${window.Makyek.squareLabel(move.to)}`;
+}
+
+function formatRate(rate) {
+  if (rate >= 1000000) {
+    return `${(rate / 1000000).toFixed(1)}M`;
+  }
+
+  if (rate >= 1000) {
+    return `${(rate / 1000).toFixed(1)}K`;
+  }
+
+  return String(Math.round(rate));
+}
+
+function formatCount(count) {
+  if (count >= 1000000) {
+    return `${(count / 1000000).toFixed(1)}M`;
+  }
+
+  if (count >= 1000) {
+    return `${(count / 1000).toFixed(1)}K`;
+  }
+
+  return String(count || 0);
 }
 
 function fillDepthSelect(selectElement) {
