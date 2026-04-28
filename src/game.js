@@ -34,7 +34,15 @@ window.Makyek.createGame = function createGame() {
         return false;
       }
 
-      return getLegalMoves(board, from).length > 0;
+      return window.Makyek.getLegalMoves(board, from).length > 0;
+    },
+
+    getLegalMoves(player = currentPlayer) {
+      if (winner) {
+        return [];
+      }
+
+      return window.Makyek.getAllLegalMoves(board, player);
     },
 
     movePiece(from, to) {
@@ -60,19 +68,17 @@ window.Makyek.createGame = function createGame() {
         return validation;
       }
 
-      board[to.row][to.col] = piece;
-      board[from.row][from.col] = null;
-
-      const captured = capturePieces(board, to, piece);
+      const moveResult = window.Makyek.applyMove(board, { from, to }, piece);
+      board = moveResult.board;
       const fromLabel = squareLabel(from);
       const toLabel = squareLabel(to);
       const opponent = otherPlayer(piece);
 
-      if (countPieces(board, opponent) === 0) {
+      if (moveResult.winner) {
         winner = piece;
         return {
           ok: true,
-          message: `${playerName(piece)} moved from ${fromLabel} to ${toLabel}, ${captureMessage(captured)}, and won.`,
+          message: `${playerName(piece)} moved from ${fromLabel} to ${toLabel}, ${captureMessage(moveResult.captured)}, and won.`,
         };
       }
 
@@ -80,7 +86,7 @@ window.Makyek.createGame = function createGame() {
 
       return {
         ok: true,
-        message: `${playerName(piece)} moved from ${fromLabel} to ${toLabel} and ${captureMessage(captured)}. ${playerName(currentPlayer)} to move.`,
+        message: `${playerName(piece)} moved from ${fromLabel} to ${toLabel} and ${captureMessage(moveResult.captured)}. ${playerName(currentPlayer)} to move.`,
       };
     },
   };
@@ -104,7 +110,7 @@ const AXES = [
   ],
 ];
 
-function getLegalMoves(board, from) {
+window.Makyek.getLegalMoves = function getLegalMoves(board, from) {
   const moves = [];
 
   DIRECTIONS.forEach((direction) => {
@@ -119,7 +125,48 @@ function getLegalMoves(board, from) {
   });
 
   return moves;
-}
+};
+
+window.Makyek.getAllLegalMoves = function getAllLegalMoves(board, player) {
+  const moves = [];
+
+  board.forEach((row, rowIndex) => {
+    row.forEach((piece, colIndex) => {
+      if (piece !== player) {
+        return;
+      }
+
+      window.Makyek.getLegalMoves(board, { row: rowIndex, col: colIndex }).forEach((to) => {
+        moves.push({
+          from: { row: rowIndex, col: colIndex },
+          to,
+        });
+      });
+    });
+  });
+
+  return moves;
+};
+
+window.Makyek.applyMove = function applyMove(board, move, player) {
+  const nextBoard = cloneBoard(board);
+
+  nextBoard[move.to.row][move.to.col] = player;
+  nextBoard[move.from.row][move.from.col] = null;
+
+  const captured = capturePieces(nextBoard, move.to, player);
+  const opponent = otherPlayer(player);
+
+  return {
+    board: nextBoard,
+    captured,
+    winner: countPieces(nextBoard, opponent) === 0 ? player : null,
+  };
+};
+
+window.Makyek.otherPlayer = otherPlayer;
+window.Makyek.countPieces = countPieces;
+window.Makyek.squareLabel = squareLabel;
 
 function validateRookMove(board, from, to) {
   if (from.row === to.row && from.col === to.col) {
@@ -235,6 +282,10 @@ function countPieces(board, player) {
     (total, row) => total + row.filter((piece) => piece === player).length,
     0,
   );
+}
+
+function cloneBoard(board) {
+  return board.map((row) => row.slice());
 }
 
 function isInsideBoard(square) {

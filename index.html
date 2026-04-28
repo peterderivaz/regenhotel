@@ -8,6 +8,7 @@
     <script defer src="src/rules.js"></script>
     <script defer src="src/game.js"></script>
     <script defer src="src/renderer.js"></script>
+    <script defer src="src/ai.js"></script>
     <script defer src="src/main.js"></script>
   </head>
   <body>
@@ -22,6 +23,31 @@
             Reset
           </button>
         </header>
+
+        <div class="controls" aria-label="Game options">
+          <label class="toggle-control">
+            <input id="ai-enabled" type="checkbox">
+            <span>Black AI</span>
+          </label>
+
+          <label class="field-control">
+            <span>AI type</span>
+            <select id="ai-type">
+              <option value="minimax">Minimax</option>
+              <option value="greedy">Greedy captures</option>
+              <option value="random">Random</option>
+            </select>
+          </label>
+
+          <label class="field-control">
+            <span>Depth</span>
+            <select id="ai-depth">
+              <option value="1">1 ply</option>
+              <option value="2" selected>2 ply</option>
+              <option value="3">3 ply</option>
+            </select>
+          </label>
+        </div>
 
         <div id="board" class="board" aria-label="8 by 8 Mak-yek board"></div>
       </section>

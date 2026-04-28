@@ -1,6 +1,12 @@
 window.Makyek = window.Makyek || {};
 
-window.Makyek.renderBoard = function renderBoard({ boardElement, statusElement, game, onMove }) {
+window.Makyek.renderBoard = function renderBoard({
+  boardElement,
+  statusElement,
+  game,
+  onMove,
+  inputBlocked,
+}) {
   boardElement.replaceChildren();
 
   const boardSize = window.Makyek.BOARD_SIZE;
@@ -9,9 +15,9 @@ window.Makyek.renderBoard = function renderBoard({ boardElement, statusElement, 
     for (let col = 0; col < boardSize; col += 1) {
       const square = createSquare(row, col);
       const piece = game.board[row][col];
-      const canMove = piece && game.canMoveFrom({ row, col });
+      const canMove = !inputBlocked && piece && game.canMoveFrom({ row, col });
 
-      addDropHandlers(square, onMove);
+      addDropHandlers(square, onMove, inputBlocked);
 
       if (piece) {
         square.append(createPiece(piece, row, col, statusElement, canMove));
@@ -62,8 +68,12 @@ function createPiece(piece, row, col, statusElement, canMove) {
   return pieceElement;
 }
 
-function addDropHandlers(square, onMove) {
+function addDropHandlers(square, onMove, inputBlocked) {
   square.addEventListener("dragover", (event) => {
+    if (inputBlocked) {
+      return;
+    }
+
     event.preventDefault();
     square.classList.add("drop-target");
   });
@@ -73,6 +83,10 @@ function addDropHandlers(square, onMove) {
   });
 
   square.addEventListener("drop", (event) => {
+    if (inputBlocked) {
+      return;
+    }
+
     event.preventDefault();
     square.classList.remove("drop-target");
 
