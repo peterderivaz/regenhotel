@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mak-yek</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <script defer src="src/rules.js"></script>
+    <script defer src="src/game.js"></script>
+    <script defer src="src/renderer.js"></script>
+    <script defer src="src/main.js"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="game-layout" aria-label="Mak-yek game">
+        <header class="game-header">
+          <div>
+            <h1>Mak-yek</h1>
+            <p id="status" class="status">Drag a piece to an empty square.</p>
+          </div>
+          <button id="reset-board" class="icon-button" type="button" title="Reset board" aria-label="Reset board">
+            Reset
+          </button>
+        </header>
+
+        <div id="board" class="board" aria-label="8 by 8 Mak-yek board"></div>
+      </section>
+    </main>
+  </body>
+</html>
