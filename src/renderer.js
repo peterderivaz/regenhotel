@@ -9,11 +9,12 @@ window.Makyek.renderBoard = function renderBoard({ boardElement, statusElement, 
     for (let col = 0; col < boardSize; col += 1) {
       const square = createSquare(row, col);
       const piece = game.board[row][col];
+      const canMove = piece && game.canMoveFrom({ row, col });
 
       addDropHandlers(square, onMove);
 
       if (piece) {
-        square.append(createPiece(piece, row, col, statusElement));
+        square.append(createPiece(piece, row, col, statusElement, canMove));
       }
 
       boardElement.append(square);
@@ -31,17 +32,23 @@ function createSquare(row, col) {
   return square;
 }
 
-function createPiece(piece, row, col, statusElement) {
+function createPiece(piece, row, col, statusElement, canMove) {
   const pieceElement = document.createElement("button");
-  pieceElement.className = `piece ${piece}-piece`;
+  pieceElement.className = `piece ${piece}-piece${canMove ? " movable" : ""}`;
   pieceElement.type = "button";
-  pieceElement.draggable = true;
+  pieceElement.draggable = canMove;
+  pieceElement.disabled = !canMove;
   pieceElement.dataset.row = row;
   pieceElement.dataset.col = col;
   pieceElement.setAttribute("aria-label", `${piece} piece on ${squareLabel(row, col)}`);
   pieceElement.title = `${piece} piece`;
 
   pieceElement.addEventListener("dragstart", (event) => {
+    if (!canMove) {
+      event.preventDefault();
+      return;
+    }
+
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("application/json", JSON.stringify({ row, col }));
     pieceElement.classList.add("dragging");

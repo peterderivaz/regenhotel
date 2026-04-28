@@ -133,6 +133,10 @@ button {
   cursor: grab;
 }
 
+.piece:disabled {
+  cursor: default;
+}
+
 .piece:active {
   cursor: grabbing;
 }
@@ -147,6 +151,11 @@ button {
 
 .piece.dragging {
   opacity: 0.42;
+}
+
+.piece.movable {
+  outline: 4px solid var(--square-hover);
+  outline-offset: 3px;
 }
 
 @media (max-width: 520px) {

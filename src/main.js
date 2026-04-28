@@ -19,8 +19,9 @@ function draw() {
 
 resetButton.addEventListener("click", () => {
   game.reset();
-  statusElement.textContent = "Board reset. Drag a piece to an empty square.";
+  statusElement.textContent = "Board reset. Light to move.";
   draw();
 });
 
+statusElement.textContent = "Light to move.";
 draw();
