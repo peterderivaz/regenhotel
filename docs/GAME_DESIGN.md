@@ -10,6 +10,7 @@
 - Captures remove opponent pieces immediately.
 - A player with no pieces left loses.
 - Black can optionally be controlled by AI.
+- White can optionally show AI hints while thinking up to the selected depth.
 
 ## Initial Placeholder Setup
 
@@ -28,3 +29,4 @@
 - Random chooses any legal Black move.
 - Greedy captures chooses the move with the strongest immediate capture and board score.
 - Minimax searches ahead up to the selected depth, using material and mobility to score boards.
+- White thinking shows the best White move found at each depth in different board colors and cancels when White moves.

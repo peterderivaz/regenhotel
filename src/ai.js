@@ -20,6 +20,17 @@ window.Makyek.chooseAiMove = function chooseAiMove(game, options) {
   return chooseMinimaxMove(board, moves, player, options.depth);
 };
 
+window.Makyek.chooseAiMoveAtDepth = function chooseAiMoveAtDepth(game, depth, player = "dark") {
+  const board = game.board;
+  const moves = window.Makyek.getAllLegalMoves(board, player);
+
+  if (moves.length === 0) {
+    return null;
+  }
+
+  return chooseMinimaxResult(board, moves, player, depth);
+};
+
 function chooseGreedyMove(board, moves, player) {
   return bestMoveByScore(moves, (move) => {
     const result = window.Makyek.applyMove(board, move, player);
@@ -28,10 +39,15 @@ function chooseGreedyMove(board, moves, player) {
 }
 
 function chooseMinimaxMove(board, moves, player, depth) {
-  const searchDepth = Math.max(1, Math.min(Number(depth) || 1, 3));
+  const result = chooseMinimaxResult(board, moves, player, depth);
+  return result ? result.move : null;
+}
+
+function chooseMinimaxResult(board, moves, player, depth) {
+  const searchDepth = Math.max(1, Math.min(Number(depth) || 1, 10));
   const orderedMoves = orderMoves(board, moves, player);
 
-  return bestMoveByScore(orderedMoves, (move) => {
+  return bestResultByScore(orderedMoves, (move) => {
     const result = window.Makyek.applyMove(board, move, player);
 
     if (result.winner) {
@@ -108,6 +124,11 @@ function minimax(board, playerToMove, maximizingPlayer, depth, alpha, beta) {
 }
 
 function bestMoveByScore(moves, scoreMove) {
+  const result = bestResultByScore(moves, scoreMove);
+  return result ? result.move : null;
+}
+
+function bestResultByScore(moves, scoreMove) {
   let bestMove = moves[0];
   let bestScore = -Infinity;
 
@@ -120,7 +141,10 @@ function bestMoveByScore(moves, scoreMove) {
     }
   });
 
-  return bestMove;
+  return {
+    move: bestMove,
+    score: bestScore,
+  };
 }
 
 function orderMoves(board, moves, player) {

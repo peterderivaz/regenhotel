@@ -42,9 +42,19 @@
           <label class="field-control">
             <span>Depth</span>
             <select id="ai-depth">
-              <option value="1">1 ply</option>
               <option value="2" selected>2 ply</option>
-              <option value="3">3 ply</option>
+            </select>
+          </label>
+
+          <label class="toggle-control">
+            <input id="ponder-enabled" type="checkbox">
+            <span>Think on White</span>
+          </label>
+
+          <label class="field-control">
+            <span>Think limit</span>
+            <select id="ponder-depth">
+              <option value="2" selected>2 ply</option>
             </select>
           </label>
         </div>

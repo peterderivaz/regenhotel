@@ -6,6 +6,7 @@ window.Makyek.renderBoard = function renderBoard({
   game,
   onMove,
   inputBlocked,
+  analysisMoves = [],
 }) {
   boardElement.replaceChildren();
 
@@ -16,8 +17,10 @@ window.Makyek.renderBoard = function renderBoard({
       const square = createSquare(row, col);
       const piece = game.board[row][col];
       const canMove = !inputBlocked && piece && game.canMoveFrom({ row, col });
+      const squareAnalysis = analysisMoves.filter((entry) => touchesSquare(entry.move, row, col));
 
       addDropHandlers(square, onMove, inputBlocked);
+      addAnalysisMarkers(square, squareAnalysis, row, col);
 
       if (piece) {
         square.append(createPiece(piece, row, col, statusElement, canMove));
@@ -114,6 +117,32 @@ function readDragData(event) {
   } catch {
     return null;
   }
+}
+
+function addAnalysisMarkers(square, analysisMoves, row, col) {
+  analysisMoves.forEach((entry) => {
+    const marker = document.createElement("span");
+    const role = sameSquare(entry.move.from, row, col) ? "from" : "to";
+    marker.className = `analysis-marker ${role}`;
+    marker.style.setProperty("--marker-depth", entry.depth - 1);
+    marker.style.setProperty("--marker-color", depthColor(entry.depth));
+    marker.textContent = `d${entry.depth}`;
+    marker.title = `Depth ${entry.depth}: ${squareLabel(entry.move.from.row, entry.move.from.col)} to ${squareLabel(entry.move.to.row, entry.move.to.col)}`;
+    square.append(marker);
+  });
+}
+
+function touchesSquare(move, row, col) {
+  return sameSquare(move.from, row, col) || sameSquare(move.to, row, col);
+}
+
+function sameSquare(square, row, col) {
+  return square.row === row && square.col === col;
+}
+
+function depthColor(depth) {
+  const hue = (190 + (depth - 1) * 37) % 360;
+  return `hsl(${hue} 78% 72%)`;
 }
 
 function squareLabel(row, col) {

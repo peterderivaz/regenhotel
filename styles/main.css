@@ -209,6 +209,33 @@ button {
   outline-offset: 3px;
 }
 
+.analysis-marker {
+  position: absolute;
+  z-index: 2;
+  min-width: 26px;
+  height: 20px;
+  padding: 0 5px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(25, 34, 31, 0.38);
+  border-radius: 999px;
+  color: #111816;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1;
+  top: calc(4px + var(--marker-depth) * 8px);
+  background: var(--marker-color);
+  pointer-events: none;
+}
+
+.analysis-marker.from {
+  left: 6px;
+}
+
+.analysis-marker.to {
+  right: 6px;
+}
+
 @media (max-width: 520px) {
   .app-shell {
     padding: 16px;
@@ -217,5 +244,24 @@ button {
 
   .game-header {
     align-items: flex-start;
+  }
+
+  .analysis-marker {
+    min-width: 20px;
+    height: 10px;
+    padding: 0 3px;
+    font-size: 0.48rem;
+  }
+
+  .analysis-marker.from {
+    left: 3px;
+  }
+
+  .analysis-marker.to {
+    right: 3px;
+  }
+
+  .analysis-marker {
+    top: calc(2px + var(--marker-depth) * 4px);
   }
 }
