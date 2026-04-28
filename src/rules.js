@@ -11,12 +11,12 @@ window.Makyek.createInitialBoard = function createInitialBoard() {
 };
 
 function createInitialPiece(row, col) {
-  if (row < 2) {
-    return "dark";
+  if (col < 2) {
+    return "light";
   }
 
-  if (row > 5) {
-    return "light";
+  if (col > 5) {
+    return "dark";
   }
 
   return null;

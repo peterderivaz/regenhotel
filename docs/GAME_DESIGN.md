@@ -9,7 +9,6 @@
 
 ## Initial Placeholder Setup
 
-- Dark pieces start on rows 1 and 2.
-- Light pieces start on rows 7 and 8.
-- Middle four rows start empty.
-
+- Light pieces start on the left two columns.
+- Dark pieces start on the right two columns.
+- Middle four columns start empty.
