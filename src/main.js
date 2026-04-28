@@ -9,7 +9,7 @@ const ponderDepthSelect = document.querySelector("#ponder-depth");
 
 const game = window.Makyek.createGame();
 let aiTimer = null;
-let ponderTimer = null;
+let ponderWorker = null;
 let ponderRunId = 0;
 let analysisMoves = [];
 
@@ -23,6 +23,7 @@ function draw() {
     game,
     inputBlocked: isAiTurn(),
     analysisMoves,
+    onMoveStart: clearPondering,
     onMove: (from, to) => {
       clearPondering();
       const result = game.movePiece(from, to);
@@ -106,7 +107,7 @@ function clearAiTimer() {
 }
 
 function schedulePondering() {
-  clearPonderTimer();
+  clearPonderWorker();
 
   if (!shouldPonder()) {
     analysisMoves = [];
@@ -116,40 +117,55 @@ function schedulePondering() {
 
   const runId = ponderRunId;
   const maxDepth = Number(ponderDepthSelect.value);
-  let depth = 1;
 
   statusElement.textContent = `Thinking for White to depth ${maxDepth}...`;
 
-  function thinkAtNextDepth() {
-    if (runId !== ponderRunId || !shouldPonder()) {
-      return;
-    }
-
-    const result = window.Makyek.chooseAiMoveAtDepth(game, depth, "light");
-
-    if (runId !== ponderRunId || !shouldPonder()) {
-      return;
-    }
-
-    if (result) {
-      analysisMoves = analysisMoves.filter((entry) => entry.depth !== depth);
-      analysisMoves.push({
-        depth,
-        move: result.move,
-        score: result.score,
-      });
-      statusElement.textContent = `White hint depth ${depth}: ${formatMove(result.move)}.`;
-      draw();
-    }
-
-    depth += 1;
-
-    if (depth <= maxDepth) {
-      ponderTimer = window.setTimeout(thinkAtNextDepth, 25);
-    }
+  if (!window.Worker) {
+    statusElement.textContent = "White thinking needs Web Worker support.";
+    return;
   }
 
-  ponderTimer = window.setTimeout(thinkAtNextDepth, 25);
+  try {
+    ponderWorker = new Worker("src/ponder-worker.js");
+  } catch {
+    statusElement.textContent = "White thinking needs this page served by a local web server.";
+    return;
+  }
+
+  ponderWorker.addEventListener("message", (event) => {
+    const { id, depth, result } = event.data;
+
+    if (id !== ponderRunId || !shouldPonder()) {
+      return;
+    }
+
+    if (!result) {
+      return;
+    }
+
+    analysisMoves = analysisMoves.filter((entry) => entry.depth !== depth);
+    analysisMoves.push({
+      depth,
+      move: result.move,
+      score: result.score,
+    });
+    statusElement.textContent = `White hint depth ${depth}: ${formatMove(result.move)}.`;
+    draw();
+  });
+  ponderWorker.addEventListener("error", () => {
+    if (runId !== ponderRunId) {
+      return;
+    }
+
+    clearPondering();
+    statusElement.textContent = "White thinking worker failed to start.";
+    draw();
+  });
+  ponderWorker.postMessage({
+    id: runId,
+    board: game.board,
+    maxDepth,
+  });
 }
 
 function shouldPonder() {
@@ -159,13 +175,13 @@ function shouldPonder() {
 function clearPondering() {
   analysisMoves = [];
   ponderRunId += 1;
-  clearPonderTimer();
+  clearPonderWorker();
 }
 
-function clearPonderTimer() {
-  if (ponderTimer) {
-    window.clearTimeout(ponderTimer);
-    ponderTimer = null;
+function clearPonderWorker() {
+  if (ponderWorker) {
+    ponderWorker.terminate();
+    ponderWorker = null;
   }
 }
 

@@ -5,6 +5,7 @@ window.Makyek.renderBoard = function renderBoard({
   statusElement,
   game,
   onMove,
+  onMoveStart,
   inputBlocked,
   analysisMoves = [],
 }) {
@@ -23,7 +24,7 @@ window.Makyek.renderBoard = function renderBoard({
       addAnalysisMarkers(square, squareAnalysis, row, col);
 
       if (piece) {
-        square.append(createPiece(piece, row, col, statusElement, canMove));
+        square.append(createPiece(piece, row, col, statusElement, canMove, onMoveStart));
       }
 
       boardElement.append(square);
@@ -41,7 +42,7 @@ function createSquare(row, col) {
   return square;
 }
 
-function createPiece(piece, row, col, statusElement, canMove) {
+function createPiece(piece, row, col, statusElement, canMove, onMoveStart) {
   const pieceElement = document.createElement("button");
   pieceElement.className = `piece ${piece}-piece${canMove ? " movable" : ""}`;
   pieceElement.type = "button";
@@ -61,6 +62,9 @@ function createPiece(piece, row, col, statusElement, canMove) {
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("application/json", JSON.stringify({ row, col }));
     pieceElement.classList.add("dragging");
+    if (onMoveStart) {
+      onMoveStart();
+    }
     statusElement.textContent = `Dragging ${piece} piece from ${squareLabel(row, col)}.`;
   });
 
