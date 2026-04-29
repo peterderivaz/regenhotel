@@ -447,15 +447,30 @@ async function loadSelectedLevel() {
   try {
     const level = await window.Makyek.loadLevel(levelSelect.value);
     game.reset(level);
+    setSelectValue(aiDepthSelect, level.aiDepth || 2);
     statusElement.textContent = level.helpText || "Level loaded. Light to move.";
   } catch (error) {
     game.reset(null);
+    setSelectValue(aiDepthSelect, 2);
     statusElement.textContent = error.message || "Could not load level.";
   }
 
   draw();
   scheduleAiMove();
   schedulePondering();
+}
+
+function setSelectValue(selectElement, value) {
+  const stringValue = String(value);
+
+  if (![...selectElement.options].some((option) => option.value === stringValue)) {
+    const option = document.createElement("option");
+    option.value = stringValue;
+    option.textContent = `${stringValue} ply`;
+    selectElement.append(option);
+  }
+
+  selectElement.value = stringValue;
 }
 
 loadSelectedLevel();

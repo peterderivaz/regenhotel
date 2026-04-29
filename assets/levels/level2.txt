@@ -6,3 +6,4 @@ Capture all the goblins to finish the level.
 ##    ##
 ##g   ##
 ########
+depth=3

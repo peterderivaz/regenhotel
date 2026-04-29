@@ -24,7 +24,8 @@ window.Makyek.parseLevel = function parseLevel(source, name = "level") {
   }
 
   const helpText = lines.slice(0, gridStart).join(" ");
-  const gridLines = lines.slice(gridStart);
+  const gridLines = lines.slice(gridStart, gridStart + window.Makyek.BOARD_ROWS);
+  const settingLines = lines.slice(gridStart + window.Makyek.BOARD_ROWS);
 
   if (gridLines.length !== window.Makyek.BOARD_ROWS) {
     throw new Error(`${name} must have ${window.Makyek.BOARD_ROWS} grid rows.`);
@@ -42,6 +43,7 @@ window.Makyek.parseLevel = function parseLevel(source, name = "level") {
     name,
     helpText,
     board,
+    aiDepth: parseLevelDepth(settingLines, name),
     darkCanMove: gridLines.some((line) => line.includes("G")),
   };
 };
@@ -64,4 +66,20 @@ function parseLevelCell(cell) {
   }
 
   return null;
+}
+
+function parseLevelDepth(lines, name) {
+  const depthLine = lines.find((line) => line.trim().startsWith("depth="));
+
+  if (!depthLine) {
+    return 2;
+  }
+
+  const depth = Number(depthLine.split("=")[1]);
+
+  if (!Number.isInteger(depth) || depth < 1) {
+    throw new Error(`${name} has invalid depth setting.`);
+  }
+
+  return depth;
 }

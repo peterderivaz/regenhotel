@@ -7,4 +7,4 @@
 - F is starting squares for Filip
 - g or G are starting squares for goblins
 - If there are no G squares, then the goblins do not move and skip their turn
-
+- After grid can set depth=3 to indicate black AI depth, default to 2
