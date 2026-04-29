@@ -70,7 +70,12 @@ button {
 .game-header h1 {
   margin: 0;
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  width: 10%;
+  height: 10%;
+  min-width: 44px;
+  min-height: 44px;
   font-size: 0;
   cursor: pointer;
   user-select: none;
