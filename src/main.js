@@ -436,13 +436,15 @@ function showStartScreen() {
 function createStartButton() {
   const button = document.createElement("button");
   const image = document.createElement("img");
+  const label = document.createElement("span");
 
   button.className = "start-button";
   button.type = "button";
   button.setAttribute("aria-label", "Start game");
   image.src = "assets/images/Poster_regen.png";
   image.alt = "Regen Hotel";
-  button.append(image);
+  label.textContent = "Click to start";
+  button.append(image, label);
   button.addEventListener("click", startFirstLevel);
 
   return button;
