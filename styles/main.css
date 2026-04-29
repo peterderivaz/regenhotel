@@ -139,15 +139,15 @@ button {
 
 .board {
   width: min(100%, 720px);
-  aspect-ratio: 1;
+  aspect-ratio: var(--board-aspect, 1);
   position: relative;
   border: 3px solid var(--line);
   overflow: hidden;
   background-color: var(--line);
   background-image: url("../assets/images/hotel.png");
-  background-position: center;
+  background-position: var(--hotel-bg-x, 50%) var(--hotel-bg-y, 50%);
   background-repeat: no-repeat;
-  background-size: cover;
+  background-size: var(--hotel-bg-width, 100%) var(--hotel-bg-height, 100%);
   box-shadow: 0 18px 50px rgba(25, 34, 31, 0.18);
   touch-action: none;
   user-select: none;
@@ -235,8 +235,8 @@ button {
   left: var(--cell-x);
   top: var(--cell-y);
   z-index: 1;
-  width: 9.2%;
-  height: 10.5%;
+  width: calc(9.2% * var(--cell-scale-x, 1));
+  height: calc(10.5% * var(--cell-scale-y, 1));
   transform: translate(-50%, -50%);
   display: grid;
   place-items: center;

@@ -2,6 +2,8 @@ window.Makyek = window.Makyek || {};
 
 const HOTEL_BOARD_COLUMNS = [7.6, 18.5, 29.8, 41.0, 58.8, 70.4, 81.9, 93.0];
 const HOTEL_BOARD_ROWS = [9.4, 23.3, 37.5, 51.6, 65.6, 79.2, 91.4];
+const FULL_BOARD_VIEWPORT = { left: 0, top: 0, width: 100, height: 100 };
+let currentViewport = FULL_BOARD_VIEWPORT;
 
 ["light", "dark"].forEach((piece) => {
   [false, true].forEach((isCaptured) => {
@@ -24,11 +26,18 @@ window.Makyek.renderBoard = function renderBoard({
 
   const boardRows = Math.min(game.board.length, HOTEL_BOARD_ROWS.length);
   const boardCols = Math.min(game.board[0].length, HOTEL_BOARD_COLUMNS.length);
+  currentViewport = getBoardViewport(game.board, boardRows, boardCols);
+  applyBoardViewport(boardElement, currentViewport);
 
   for (let row = 0; row < boardRows; row += 1) {
     for (let col = 0; col < boardCols; col += 1) {
-      const square = createSquare(row, col);
+      const square = createSquare(row, col, currentViewport);
       const piece = game.board[row][col];
+
+      if (piece === "#") {
+        continue;
+      }
+
       const canMove = !inputBlocked && piece && game.canMoveFrom({ row, col });
       addDropHandlers(square, onMove, inputBlocked);
 
@@ -90,13 +99,15 @@ window.Makyek.animateAiMove = function animateAiMove(boardElement, move, capture
   });
 };
 
-function createSquare(row, col) {
+function createSquare(row, col, viewport) {
   const square = document.createElement("div");
   square.className = `square ${(row + col) % 2 === 0 ? "light" : "dark"}`;
   square.dataset.row = row;
   square.dataset.col = col;
-  square.style.setProperty("--cell-x", `${HOTEL_BOARD_COLUMNS[col]}%`);
-  square.style.setProperty("--cell-y", `${HOTEL_BOARD_ROWS[row]}%`);
+  square.style.setProperty("--cell-x", `${viewportCoordinate(HOTEL_BOARD_COLUMNS[col], viewport.left, viewport.width)}%`);
+  square.style.setProperty("--cell-y", `${viewportCoordinate(HOTEL_BOARD_ROWS[row], viewport.top, viewport.height)}%`);
+  square.style.setProperty("--cell-scale-x", String(100 / viewport.width));
+  square.style.setProperty("--cell-scale-y", String(100 / viewport.height));
   square.setAttribute("role", "gridcell");
   square.setAttribute("aria-label", squareLabel(row, col));
   return square;
@@ -279,11 +290,92 @@ function createMoveArrows(analysisMoves, className) {
 
 function squareCenter(square) {
   return {
-    x: HOTEL_BOARD_COLUMNS[square.col],
-    y: HOTEL_BOARD_ROWS[square.row],
+    x: viewportCoordinate(HOTEL_BOARD_COLUMNS[square.col], currentViewport.left, currentViewport.width),
+    y: viewportCoordinate(HOTEL_BOARD_ROWS[square.row], currentViewport.top, currentViewport.height),
   };
 }
 
 function squareLabel(row, col) {
   return `${String.fromCharCode(65 + col)}${(window.Makyek.BOARD_ROWS || HOTEL_BOARD_ROWS.length) - row}`;
+}
+
+function getBoardViewport(board, boardRows, boardCols) {
+  const activeSquares = [];
+
+  for (let row = 0; row < boardRows; row += 1) {
+    for (let col = 0; col < boardCols; col += 1) {
+      if (board[row][col] !== "#") {
+        activeSquares.push({ row, col });
+      }
+    }
+  }
+
+  if (activeSquares.length === 0) {
+    return FULL_BOARD_VIEWPORT;
+  }
+
+  const xs = activeSquares.map((square) => HOTEL_BOARD_COLUMNS[square.col]);
+  const ys = activeSquares.map((square) => HOTEL_BOARD_ROWS[square.row]);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const paddingX = 8;
+  const paddingY = 4;
+  let left = Math.max(0, minX - paddingX);
+  let right = Math.min(100, maxX + paddingX);
+  let top = Math.max(0, minY - paddingY);
+  let bottom = Math.min(100, maxY + paddingY);
+  const width = Math.min(100, Math.max(right - left, 34));
+  const height = Math.min(100, Math.max(bottom - top, 24));
+
+  ({ start: left, end: right } = centerSpan(left, right, width));
+  ({ start: top, end: bottom } = centerSpan(top, bottom, height));
+
+  return {
+    left,
+    top,
+    width: right - left,
+    height: bottom - top,
+  };
+}
+
+function centerSpan(start, end, size) {
+  const center = (start + end) / 2;
+  let nextStart = center - size / 2;
+  let nextEnd = center + size / 2;
+
+  if (nextStart < 0) {
+    nextEnd -= nextStart;
+    nextStart = 0;
+  }
+
+  if (nextEnd > 100) {
+    nextStart -= nextEnd - 100;
+    nextEnd = 100;
+  }
+
+  return {
+    start: Math.max(0, nextStart),
+    end: Math.min(100, nextEnd),
+  };
+}
+
+function applyBoardViewport(boardElement, viewport) {
+  const scaleX = 100 / viewport.width;
+  const scaleY = 100 / viewport.height;
+  const maxOffsetX = 100 - viewport.width;
+  const maxOffsetY = 100 - viewport.height;
+  const positionX = maxOffsetX === 0 ? 50 : (viewport.left / maxOffsetX) * 100;
+  const positionY = maxOffsetY === 0 ? 50 : (viewport.top / maxOffsetY) * 100;
+
+  boardElement.style.setProperty("--board-aspect", `${viewport.width} / ${viewport.height}`);
+  boardElement.style.setProperty("--hotel-bg-width", `${scaleX * 100}%`);
+  boardElement.style.setProperty("--hotel-bg-height", `${scaleY * 100}%`);
+  boardElement.style.setProperty("--hotel-bg-x", `${positionX}%`);
+  boardElement.style.setProperty("--hotel-bg-y", `${positionY}%`);
+}
+
+function viewportCoordinate(coordinate, start, size) {
+  return ((coordinate - start) / size) * 100;
 }

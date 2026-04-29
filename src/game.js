@@ -1,9 +1,11 @@
 window.Makyek = window.Makyek || {};
 
-window.Makyek.createGame = function createGame() {
-  let board = window.Makyek.createInitialBoard();
+window.Makyek.createGame = function createGame(initialLevel = null) {
+  let level = initialLevel;
+  let board = window.Makyek.createInitialBoard(level);
   let currentPlayer = "light";
   let winner = null;
+  let darkCanMove = level ? level.darkCanMove : true;
 
   return {
     get board() {
@@ -18,10 +20,20 @@ window.Makyek.createGame = function createGame() {
       return winner;
     },
 
-    reset() {
-      board = window.Makyek.createInitialBoard();
+    get helpText() {
+      return level ? level.helpText : "";
+    },
+
+    get darkCanMove() {
+      return darkCanMove;
+    },
+
+    reset(nextLevel = level) {
+      level = nextLevel;
+      board = window.Makyek.createInitialBoard(level);
       currentPlayer = "light";
       winner = null;
+      darkCanMove = level ? level.darkCanMove : true;
     },
 
     canMoveFrom(from) {
@@ -30,6 +42,10 @@ window.Makyek.createGame = function createGame() {
       }
 
       const piece = board[from.row][from.col];
+      if (piece === "#") {
+        return false;
+      }
+
       if (piece !== currentPlayer) {
         return false;
       }
@@ -55,7 +71,7 @@ window.Makyek.createGame = function createGame() {
       }
 
       const piece = board[from.row][from.col];
-      if (!piece) {
+      if (!piece || piece === "#") {
         return { ok: false, message: "Choose a square with a piece." };
       }
 
@@ -84,6 +100,16 @@ window.Makyek.createGame = function createGame() {
       }
 
       currentPlayer = opponent;
+
+      if (currentPlayer === "dark" && !darkCanMove) {
+        currentPlayer = piece;
+
+        return {
+          ok: true,
+          message: `${playerName(piece)} moved from ${fromLabel} to ${toLabel} and ${captureMessage(moveResult.captured)}. Goblins stay put. ${playerName(currentPlayer)} to move.`,
+          capturedSquares: moveResult.capturedSquares,
+        };
+      }
 
       return {
         ok: true,

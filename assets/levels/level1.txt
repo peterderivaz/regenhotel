@@ -1,0 +1,9 @@
+Filip can move horizontally and vertically.
+Move Filip between the goblins to capture them.
+########
+##F   ##
+##    ##
+## g g##
+########
+########
+########

@@ -3,6 +3,7 @@ const playAreaElement = document.querySelector(".play-area");
 const statusElement = document.querySelector("#status");
 const resetButton = document.querySelector("#reset-board");
 const moveListElement = document.querySelector("#move-list");
+const levelSelect = document.querySelector("#level-select");
 const aiEnabledInput = document.querySelector("#ai-enabled");
 const aiTypeSelect = document.querySelector("#ai-type");
 const aiDepthSelect = document.querySelector("#ai-depth");
@@ -21,6 +22,7 @@ let hoveredMove = null;
 
 fillDepthSelect(aiDepthSelect);
 fillDepthSelect(ponderDepthSelect);
+fillLevelSelect(levelSelect);
 
 function draw() {
   window.Makyek.renderBoard({
@@ -49,10 +51,14 @@ resetButton.addEventListener("click", () => {
   clearAiTimer();
   clearPondering();
   game.reset();
-  statusElement.textContent = "Board reset. Light to move.";
+  statusElement.textContent = game.helpText || "Board reset. Light to move.";
   draw();
   scheduleAiMove();
   schedulePondering();
+});
+
+levelSelect.addEventListener("change", async () => {
+  await loadSelectedLevel();
 });
 
 aiEnabledInput.addEventListener("change", () => {
@@ -85,7 +91,7 @@ ponderDepthSelect.addEventListener("change", () => {
 });
 
 function isAiTurn() {
-  return aiEnabledInput.checked && game.currentPlayer === "dark" && !game.winner;
+  return aiEnabledInput.checked && game.darkCanMove && game.currentPlayer === "dark" && !game.winner;
 }
 
 function scheduleAiMove() {
@@ -343,8 +349,34 @@ function fillDepthSelect(selectElement) {
   }
 }
 
-statusElement.textContent = "Light to move.";
-draw();
-renderMoveList();
-scheduleAiMove();
-schedulePondering();
+function fillLevelSelect(selectElement) {
+  selectElement.replaceChildren();
+
+  window.Makyek.LEVEL_FILES.forEach((fileName, index) => {
+    const option = document.createElement("option");
+    option.value = fileName;
+    option.textContent = `Level ${index + 1}`;
+    selectElement.append(option);
+  });
+}
+
+async function loadSelectedLevel() {
+  clearAiTimer();
+  clearPondering();
+  statusElement.textContent = "Loading level...";
+
+  try {
+    const level = await window.Makyek.loadLevel(levelSelect.value);
+    game.reset(level);
+    statusElement.textContent = level.helpText || "Level loaded. Light to move.";
+  } catch (error) {
+    game.reset(null);
+    statusElement.textContent = error.message || "Could not load level.";
+  }
+
+  draw();
+  scheduleAiMove();
+  schedulePondering();
+}
+
+loadSelectedLevel();

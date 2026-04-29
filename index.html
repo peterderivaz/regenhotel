@@ -3,9 +3,10 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Mak-yek</title>
+    <title>Hotel Regen</title>
     <link rel="stylesheet" href="styles/main.css">
     <script defer src="src/rules.js"></script>
+    <script defer src="src/levels.js"></script>
     <script defer src="src/game.js"></script>
     <script defer src="src/renderer.js"></script>
     <script defer src="src/ai.js"></script>
@@ -16,7 +17,7 @@
       <section class="game-layout" aria-label="Mak-yek game">
         <header class="game-header">
           <div>
-            <h1>Mak-yek</h1>
+            <h1>Hotel Regen</h1>
             <p id="status" class="status">Drag a piece to an empty square.</p>
           </div>
           <button id="reset-board" class="icon-button" type="button" title="Reset board" aria-label="Reset board">
@@ -25,6 +26,11 @@
         </header>
 
         <div class="controls" aria-label="Game options">
+          <label class="field-control">
+            <span>Level</span>
+            <select id="level-select"></select>
+          </label>
+
           <label class="toggle-control">
             <input id="ai-enabled" type="checkbox">
             <span>Black AI</span>

@@ -4,7 +4,11 @@ window.Makyek.BOARD_ROWS = 7;
 window.Makyek.BOARD_COLS = 8;
 window.Makyek.BOARD_SIZE = window.Makyek.BOARD_COLS;
 
-window.Makyek.createInitialBoard = function createInitialBoard() {
+window.Makyek.createInitialBoard = function createInitialBoard(level) {
+  if (level && level.board) {
+    return level.board.map((row) => row.slice());
+  }
+
   const boardRows = window.Makyek.BOARD_ROWS;
   const boardCols = window.Makyek.BOARD_COLS;
 
