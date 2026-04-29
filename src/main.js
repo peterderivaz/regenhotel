@@ -1,6 +1,7 @@
 const boardElement = document.querySelector("#board");
 const playAreaElement = document.querySelector(".play-area");
 const statusElement = document.querySelector("#status");
+const gameHeaderElement = document.querySelector(".game-header");
 const gameTitle = document.querySelector("#game-title");
 const controlsElement = document.querySelector("#game-controls");
 const resetButton = document.querySelector("#reset-board");
@@ -38,6 +39,7 @@ gameTitle.addEventListener("keydown", (event) => {
 });
 
 function draw() {
+  boardElement.classList.remove("start-screen");
   window.Makyek.renderBoard({
     boardElement,
     statusElement,
@@ -416,6 +418,43 @@ function createLevelCompletePrompt() {
   return prompt;
 }
 
+function showStartScreen() {
+  clearAiTimer();
+  clearPondering();
+  levelComplete = false;
+  gameHeaderElement.hidden = true;
+  controlsElement.hidden = true;
+  playAreaElement.classList.add("single-column");
+  moveListElement.classList.add("hidden");
+  boardElement.classList.add("start-screen");
+  boardElement.style.setProperty("--board-aspect", "9 / 16");
+  boardElement.style.setProperty("--board-fit-ratio", "0.5625");
+  boardElement.replaceChildren(createStartButton());
+  statusElement.textContent = "Click start to begin.";
+}
+
+function createStartButton() {
+  const button = document.createElement("button");
+  const image = document.createElement("img");
+
+  button.className = "start-button";
+  button.type = "button";
+  button.setAttribute("aria-label", "Start game");
+  image.src = "assets/images/Poster_regen.png";
+  image.alt = "Regen Hotel";
+  button.append(image);
+  button.addEventListener("click", startFirstLevel);
+
+  return button;
+}
+
+async function startFirstLevel() {
+  gameHeaderElement.hidden = false;
+  controlsElement.hidden = false;
+  levelSelect.selectedIndex = 0;
+  await loadSelectedLevel();
+}
+
 async function loadNextLevel() {
   if (!levelComplete) {
     return;
@@ -442,6 +481,8 @@ async function loadSelectedLevel() {
   clearAiTimer();
   clearPondering();
   levelComplete = false;
+  gameHeaderElement.hidden = false;
+  controlsElement.hidden = false;
   statusElement.textContent = "Loading level...";
 
   try {
@@ -473,4 +514,4 @@ function setSelectValue(selectElement, value) {
   selectElement.value = stringValue;
 }
 
-loadSelectedLevel();
+showStartScreen();
