@@ -9,7 +9,7 @@ Build a playable browser version of Mak-yek using HTML, CSS, JavaScript, and ima
 - Keep the project simple and browser-runnable.
 - Prefer plain JavaScript unless a library is clearly useful.
 - Keep game rules separate from rendering/UI.
-- The first playable slice is an 8 by 8 board with draggable circular pieces.
+- The first playable slice is an 8 by 7 board with draggable circular pieces.
 
 ## Architecture Notes
 
@@ -24,4 +24,3 @@ Build a playable browser version of Mak-yek using HTML, CSS, JavaScript, and ima
 - Exact Mak-yek rule variant?
 - Single-player AI later, or local two-player first?
 - DOM board, canvas, or hybrid rendering?
-

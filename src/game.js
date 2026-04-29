@@ -292,14 +292,15 @@ function cloneBoard(board) {
 }
 
 function isInsideBoard(square) {
-  const boardSize = window.Makyek.BOARD_SIZE;
+  const boardRows = window.Makyek.BOARD_ROWS;
+  const boardCols = window.Makyek.BOARD_COLS;
 
   return (
     square &&
     square.row >= 0 &&
-    square.row < boardSize &&
+    square.row < boardRows &&
     square.col >= 0 &&
-    square.col < boardSize
+    square.col < boardCols
   );
 }
 
@@ -316,5 +317,5 @@ function captureMessage(captured) {
 }
 
 function squareLabel(square) {
-  return `${String.fromCharCode(65 + square.col)}${window.Makyek.BOARD_SIZE - square.row}`;
+  return `${String.fromCharCode(65 + square.col)}${window.Makyek.BOARD_ROWS - square.row}`;
 }

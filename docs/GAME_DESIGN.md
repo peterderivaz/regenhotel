@@ -2,7 +2,7 @@
 
 ## First Slice
 
-- Show an 8 by 8 board.
+- Show an 8 by 7 board.
 - Use circular pieces as temporary art.
 - Allow pieces to be dragged and dropped onto empty squares.
 - Players take turns moving one of their own pieces horizontally or vertically through empty squares.

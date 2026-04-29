@@ -1,5 +1,8 @@
 window.Makyek = window.Makyek || {};
 
+const HOTEL_BOARD_COLUMNS = [7.6, 18.5, 29.8, 41.0, 58.8, 70.4, 81.9, 93.0];
+const HOTEL_BOARD_ROWS = [9.4, 23.3, 37.5, 51.6, 65.6, 79.2, 91.4];
+
 window.Makyek.renderBoard = function renderBoard({
   boardElement,
   statusElement,
@@ -12,10 +15,11 @@ window.Makyek.renderBoard = function renderBoard({
 }) {
   boardElement.replaceChildren();
 
-  const boardSize = window.Makyek.BOARD_SIZE;
+  const boardRows = Math.min(game.board.length, HOTEL_BOARD_ROWS.length);
+  const boardCols = Math.min(game.board[0].length, HOTEL_BOARD_COLUMNS.length);
 
-  for (let row = 0; row < boardSize; row += 1) {
-    for (let col = 0; col < boardSize; col += 1) {
+  for (let row = 0; row < boardRows; row += 1) {
+    for (let col = 0; col < boardCols; col += 1) {
       const square = createSquare(row, col);
       const piece = game.board[row][col];
       const canMove = !inputBlocked && piece && game.canMoveFrom({ row, col });
@@ -84,6 +88,8 @@ function createSquare(row, col) {
   square.className = `square ${(row + col) % 2 === 0 ? "light" : "dark"}`;
   square.dataset.row = row;
   square.dataset.col = col;
+  square.style.setProperty("--cell-x", `${HOTEL_BOARD_COLUMNS[col]}%`);
+  square.style.setProperty("--cell-y", `${HOTEL_BOARD_ROWS[row]}%`);
   square.setAttribute("role", "gridcell");
   square.setAttribute("aria-label", squareLabel(row, col));
   return square;
@@ -91,6 +97,7 @@ function createSquare(row, col) {
 
 function createPiece(piece, row, col, statusElement, canMove, onMoveStart) {
   const pieceElement = document.createElement("button");
+  const pieceImage = document.createElement("img");
   pieceElement.className = `piece ${piece}-piece${canMove ? " movable" : ""}`;
   pieceElement.type = "button";
   pieceElement.draggable = canMove;
@@ -99,6 +106,13 @@ function createPiece(piece, row, col, statusElement, canMove, onMoveStart) {
   pieceElement.dataset.col = col;
   pieceElement.setAttribute("aria-label", `${piece} piece on ${squareLabel(row, col)}`);
   pieceElement.title = `${piece} piece`;
+  pieceImage.className = "piece-image";
+  pieceImage.src = getPieceImage(piece, false);
+  pieceImage.dataset.normalSrc = getPieceImage(piece, false);
+  pieceImage.dataset.capturedSrc = getPieceImage(piece, true);
+  pieceImage.alt = "";
+  pieceImage.draggable = false;
+  pieceElement.append(pieceImage);
 
   pieceElement.addEventListener("dragstart", (event) => {
     if (!canMove) {
@@ -120,6 +134,19 @@ function createPiece(piece, row, col, statusElement, canMove, onMoveStart) {
   });
 
   return pieceElement;
+}
+
+function getPieceImage(piece, isCaptured) {
+  const imageName =
+    piece === "dark"
+      ? isCaptured
+        ? "goblin_surprise_transparent.png"
+        : "goblin_normal_transparent.png"
+      : isCaptured
+        ? "filip_surprise_transparent.png"
+        : "filip_normal_transparent.png";
+
+  return `assets/images/${imageName}`;
 }
 
 function addDropHandlers(square, onMove, inputBlocked) {
@@ -170,6 +197,12 @@ function markCapturedPieces(boardElement, capturedSquares) {
     }
 
     if (capturedPiece) {
+      const capturedImage = capturedPiece.querySelector(".piece-image");
+
+      if (capturedImage) {
+        capturedImage.src = capturedImage.dataset.capturedSrc;
+      }
+
       capturedPiece.classList.add("captured-piece");
     }
   });
@@ -239,14 +272,12 @@ function createMoveArrows(analysisMoves, className) {
 }
 
 function squareCenter(square) {
-  const boardSize = window.Makyek.BOARD_SIZE;
-
   return {
-    x: ((square.col + 0.5) / boardSize) * 100,
-    y: ((square.row + 0.5) / boardSize) * 100,
+    x: HOTEL_BOARD_COLUMNS[square.col],
+    y: HOTEL_BOARD_ROWS[square.row],
   };
 }
 
 function squareLabel(row, col) {
-  return `${String.fromCharCode(65 + col)}${window.Makyek.BOARD_SIZE - row}`;
+  return `${String.fromCharCode(65 + col)}${(window.Makyek.BOARD_ROWS || HOTEL_BOARD_ROWS.length) - row}`;
 }

@@ -1,12 +1,15 @@
 window.Makyek = window.Makyek || {};
 
-window.Makyek.BOARD_SIZE = 8;
+window.Makyek.BOARD_ROWS = 7;
+window.Makyek.BOARD_COLS = 8;
+window.Makyek.BOARD_SIZE = window.Makyek.BOARD_COLS;
 
 window.Makyek.createInitialBoard = function createInitialBoard() {
-  const boardSize = window.Makyek.BOARD_SIZE;
+  const boardRows = window.Makyek.BOARD_ROWS;
+  const boardCols = window.Makyek.BOARD_COLS;
 
-  return Array.from({ length: boardSize }, (_, row) =>
-    Array.from({ length: boardSize }, (_, col) => createInitialPiece(row, col)),
+  return Array.from({ length: boardRows }, (_, row) =>
+    Array.from({ length: boardCols }, (_, col) => createInitialPiece(row, col)),
   );
 };
 
