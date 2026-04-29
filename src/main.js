@@ -441,10 +441,12 @@ async function startLevel(levelIndex) {
   const overlay = createPosterTransitionOverlay(startRect);
 
   gameHeaderElement.hidden = false;
+  gameHeaderElement.classList.add("transition-hidden");
   controlsElement.hidden = false;
   levelSelect.selectedIndex = levelIndex;
   await loadSelectedLevel();
   await animateStartPosterToHeader(overlay);
+  gameHeaderElement.classList.remove("transition-hidden");
 }
 
 async function showNextLevelScreen() {
