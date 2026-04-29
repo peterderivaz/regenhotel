@@ -1,5 +1,5 @@
-Filip can move horizontally and vertically.
-Move Filip between the goblins to capture them.
+Goblins have entered the hotel!
+Drag Filip between the goblins to capture them.
 ########
 ##F   ##
 ##    ##

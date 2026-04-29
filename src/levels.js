@@ -1,6 +1,6 @@
 window.Makyek = window.Makyek || {};
 
-window.Makyek.LEVEL_FILES = ["level1.txt", "level2.txt"];
+window.Makyek.LEVEL_FILES = ["level1.txt", "level2.txt", "level3.txt"];
 
 window.Makyek.loadLevel = async function loadLevel(fileName) {
   const response = await fetch(`assets/levels/${fileName}`);
