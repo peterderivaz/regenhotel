@@ -112,7 +112,7 @@ function createSquare(row, col, viewport) {
   square.style.setProperty("--cell-scale-x", String(100 / viewport.width));
   square.style.setProperty("--cell-scale-y", String(100 / viewport.height));
   square.setAttribute("role", "gridcell");
-  square.setAttribute("aria-label", squareLabel(row, col));
+  square.setAttribute("aria-label", renderSquareLabel(row, col));
   return square;
 }
 
@@ -126,7 +126,7 @@ function createPiece(piece, row, col, statusElement, canMove, onMoveStart, game)
   pieceElement.dataset.row = row;
   pieceElement.dataset.col = col;
   pieceElement.dataset.player = piece;
-  pieceElement.setAttribute("aria-label", `${piece} piece on ${squareLabel(row, col)}`);
+  pieceElement.setAttribute("aria-label", `${piece} piece on ${renderSquareLabel(row, col)}`);
   pieceElement.title = `${piece} piece`;
   pieceImage.className = "piece-image";
   pieceImage.src = getPieceImage(piece, false);
@@ -150,7 +150,7 @@ function createPiece(piece, row, col, statusElement, canMove, onMoveStart, game)
     if (onMoveStart) {
       onMoveStart();
     }
-    statusElement.textContent = `Dragging ${piece} piece from ${squareLabel(row, col)}.`;
+    statusElement.textContent = `Dragging ${piece} piece from ${renderSquareLabel(row, col)}.`;
   });
 
   pieceElement.addEventListener("dragend", () => {
@@ -450,7 +450,7 @@ function createMoveArrows(analysisMoves, className) {
     line.setAttribute("stroke-linecap", "round");
     line.setAttribute("opacity", "0.86");
     line.setAttribute("marker-end", "url(#best-move-arrowhead)");
-    title.textContent = `Depth ${entry.depth}: ${squareLabel(entry.move.from.row, entry.move.from.col)} to ${squareLabel(entry.move.to.row, entry.move.to.col)}`;
+    title.textContent = `Depth ${entry.depth}: ${renderSquareLabel(entry.move.from.row, entry.move.from.col)} to ${renderSquareLabel(entry.move.to.row, entry.move.to.col)}`;
     line.append(title);
     svg.append(line);
   });
@@ -465,7 +465,7 @@ function squareCenter(square) {
   };
 }
 
-function squareLabel(row, col) {
+function renderSquareLabel(row, col) {
   return `${String.fromCharCode(65 + col)}${(window.Makyek.BOARD_ROWS || HOTEL_BOARD_ROWS.length) - row}`;
 }
 

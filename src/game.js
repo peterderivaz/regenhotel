@@ -343,5 +343,13 @@ function captureMessage(captured) {
 }
 
 function squareLabel(square) {
+  if (
+    !square ||
+    !Number.isInteger(square.row) ||
+    !Number.isInteger(square.col)
+  ) {
+    return "unknown square";
+  }
+
   return `${String.fromCharCode(65 + square.col)}${window.Makyek.BOARD_ROWS - square.row}`;
 }

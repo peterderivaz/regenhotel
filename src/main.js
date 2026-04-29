@@ -145,8 +145,11 @@ function scheduleAiMove() {
     });
     const move = aiResult ? aiResult.move : null;
 
-    if (!move) {
-      statusElement.textContent = "Black AI has no legal move.";
+    if (!isMoveShape(move)) {
+      rememberBlackDebugSnapshot(cloneBoard(game.board), cloneBoard(game.board), aiResult, aiDepth);
+      statusElement.textContent = move
+        ? "Black AI chose an invalid move. Use Black debug to copy the state."
+        : "Black AI has no legal move.";
       draw();
       return;
     }
@@ -295,9 +298,25 @@ function rememberBlackAnalysis(result, depth) {
     depth,
     move: entry.move,
     score: entry.score,
-    isBest: bestMoves.some((move) => sameMove(move, entry.move)),
+    isBest: bestMoves.some((move) => isMoveShape(move) && isMoveShape(entry.move) && sameMove(move, entry.move)),
   }));
   renderMoveList(analysisMoveScores[0] ? analysisMoveScores[0].depth : null);
+}
+
+function isMoveShape(move) {
+  return (
+    move &&
+    isSquareShape(move.from) &&
+    isSquareShape(move.to)
+  );
+}
+
+function isSquareShape(square) {
+  return (
+    square &&
+    Number.isInteger(square.row) &&
+    Number.isInteger(square.col)
+  );
 }
 
 function rememberBlackDebugSnapshot(boardBefore, boardAfter, result, depth) {
@@ -339,8 +358,9 @@ function formatBlackDebugSnapshot() {
     `aiType=${aiType}`,
     `depth=${depth}`,
     `cacheEnabled=${cacheEnabled}`,
-    `chosen=${result.move ? formatMove(result.move) : "none"}`,
-    `score=${formatScore(result.score)}`,
+    `chosen=${result && isMoveShape(result.move) ? formatMove(result.move) : "none"}`,
+    `chosenRaw=${JSON.stringify(result ? result.move : null)}`,
+    `score=${result ? formatScore(result.score) : "none"}`,
     "",
     "boardBeforeBlack:",
     ...formatBoardForDebug(boardBefore),
@@ -352,8 +372,9 @@ function formatBlackDebugSnapshot() {
   ];
 
   scoredMoves.forEach((entry, index) => {
-    const marker = bestMoves.some((move) => sameMove(move, entry.move)) ? "*" : " ";
-    lines.push(`${String(index + 1).padStart(2, "0")}${marker} ${formatMove(entry.move)} score=${formatScore(entry.score)}`);
+    const marker = bestMoves.some((move) => isMoveShape(move) && isMoveShape(entry.move) && sameMove(move, entry.move)) ? "*" : " ";
+    const moveText = isMoveShape(entry.move) ? formatMove(entry.move) : JSON.stringify(entry.move);
+    lines.push(`${String(index + 1).padStart(2, "0")}${marker} ${moveText} score=${formatScore(entry.score)}`);
   });
 
   if (scoredMoves.length === 0) {
