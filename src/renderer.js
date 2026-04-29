@@ -146,8 +146,8 @@ function getPieceImage(piece, isCaptured) {
   const imageName =
     piece === "dark"
       ? isCaptured
-        ? "goblin_surprise_transparent.png"
-        : "goblin_normal_transparent.png"
+        ? "goblin_surprise_transparent_blue.png"
+        : "goblin_normal_transparent_blue.png"
       : isCaptured
         ? "filip_surprise_transparent.png"
         : "filip_normal_transparent.png";
