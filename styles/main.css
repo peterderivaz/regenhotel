@@ -473,6 +473,18 @@ button {
   outline-offset: -2px;
 }
 
+.square.legal-target::before {
+  content: "";
+  width: 42%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgba(248, 250, 246, 0.62);
+  box-shadow:
+    0 0 0 2px rgba(47, 127, 145, 0.55),
+    0 0 18px rgba(240, 216, 121, 0.82);
+  pointer-events: none;
+}
+
 .piece {
   position: relative;
   width: 84%;

@@ -43,7 +43,7 @@ window.Makyek.renderBoard = function renderBoard({
       addDropHandlers(square, onMove, inputBlocked, game);
 
       if (piece) {
-        square.append(createPiece(piece, row, col, statusElement, canMove, onMoveStart));
+        square.append(createPiece(piece, row, col, statusElement, canMove, onMoveStart, game));
       }
 
       boardElement.append(square);
@@ -114,7 +114,7 @@ function createSquare(row, col, viewport) {
   return square;
 }
 
-function createPiece(piece, row, col, statusElement, canMove, onMoveStart) {
+function createPiece(piece, row, col, statusElement, canMove, onMoveStart, game) {
   const pieceElement = document.createElement("button");
   const pieceImage = document.createElement("img");
   pieceElement.className = `piece ${piece}-piece${canMove ? " movable" : ""}`;
@@ -142,6 +142,9 @@ function createPiece(piece, row, col, statusElement, canMove, onMoveStart) {
     event.dataTransfer.setData("application/json", JSON.stringify({ row, col }));
     draggedSquare = { row, col };
     pieceElement.classList.add("dragging");
+    if (piece === "light") {
+      highlightLegalTargets(pieceElement.closest(".board"), game, { row, col });
+    }
     if (onMoveStart) {
       onMoveStart();
     }
@@ -151,7 +154,18 @@ function createPiece(piece, row, col, statusElement, canMove, onMoveStart) {
   pieceElement.addEventListener("dragend", () => {
     pieceElement.classList.remove("dragging");
     draggedSquare = null;
+    clearLegalTargetHighlights(pieceElement.closest(".board"));
     clearCapturePreview(pieceElement.closest(".board"));
+  });
+
+  pieceElement.addEventListener("focus", () => {
+    if (piece === "light" && canMove) {
+      highlightLegalTargets(pieceElement.closest(".board"), game, { row, col });
+    }
+  });
+
+  pieceElement.addEventListener("blur", () => {
+    clearLegalTargetHighlights(pieceElement.closest(".board"));
   });
 
   return pieceElement;
@@ -194,6 +208,7 @@ function addDropHandlers(square, onMove, inputBlocked, game) {
 
     event.preventDefault();
     square.classList.remove("drop-target");
+    clearLegalTargetHighlights(square.parentElement);
     clearCapturePreview(square.parentElement);
 
     const from = readDragData(event);
@@ -205,6 +220,28 @@ function addDropHandlers(square, onMove, inputBlocked, game) {
     if (from) {
       onMove(from, to);
     }
+  });
+}
+
+function highlightLegalTargets(boardElement, game, from) {
+  clearLegalTargetHighlights(boardElement);
+
+  if (!boardElement || !isSquareOnBoard(from)) {
+    return;
+  }
+
+  window.Makyek.getLegalMoves(game.board, from).forEach((target) => {
+    findSquare(boardElement, target)?.classList.add("legal-target");
+  });
+}
+
+function clearLegalTargetHighlights(boardElement) {
+  if (!boardElement) {
+    return;
+  }
+
+  boardElement.querySelectorAll(".legal-target").forEach((square) => {
+    square.classList.remove("legal-target");
   });
 }
 
