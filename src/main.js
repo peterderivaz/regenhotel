@@ -400,9 +400,12 @@ function completeLevelIfNoGoblinsRemain() {
   return true;
 }
 
-function showStartScreen() {
+async function showStartScreen() {
   clearAiTimer();
   clearPondering();
+  const level = await loadLevelByIndex(0);
+  const text = `Level 1. ${level.helpText || ""} Click to start.`;
+
   levelComplete = false;
   playAreaElement.classList.add("single-column");
   playAreaElement.classList.add("start-mode");
@@ -412,8 +415,8 @@ function showStartScreen() {
   boardElement.classList.add("start-screen");
   boardElement.style.setProperty("--board-aspect", "9 / 16");
   boardElement.style.setProperty("--board-fit-ratio", "0.5625");
-  boardElement.replaceChildren(createStartButton(0, "Click to start"));
-  statusElement.textContent = "Click start to begin.";
+  boardElement.replaceChildren(createStartButton(0, text));
+  statusElement.textContent = text;
 }
 
 function createStartButton(levelIndex, text) {

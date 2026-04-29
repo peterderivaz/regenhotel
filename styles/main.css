@@ -175,6 +175,7 @@ button {
     var(--board-width),
     max(0px, calc((100dvh - var(--board-vertical-chrome)) * var(--board-fit-ratio, 1) - 8px))
   );
+  justify-self: center;
   aspect-ratio: var(--board-aspect, 1);
   position: relative;
   border: 3px solid var(--line);
