@@ -321,7 +321,7 @@ function getBoardViewport(board, boardRows, boardCols) {
   const minY = Math.min(...ys);
   const maxY = Math.max(...ys);
   const paddingX = 8;
-  const paddingY = 4;
+  const paddingY = 8;
   let left = Math.max(0, minX - paddingX);
   let right = Math.min(100, maxX + paddingX);
   let top = Math.max(0, minY - paddingY);

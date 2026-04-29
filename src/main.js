@@ -1,6 +1,8 @@
 const boardElement = document.querySelector("#board");
 const playAreaElement = document.querySelector(".play-area");
 const statusElement = document.querySelector("#status");
+const gameTitle = document.querySelector("#game-title");
+const controlsElement = document.querySelector("#game-controls");
 const resetButton = document.querySelector("#reset-board");
 const moveListElement = document.querySelector("#move-list");
 const levelSelect = document.querySelector("#level-select");
@@ -23,6 +25,16 @@ let hoveredMove = null;
 fillDepthSelect(aiDepthSelect);
 fillDepthSelect(ponderDepthSelect);
 fillLevelSelect(levelSelect);
+
+gameTitle.addEventListener("click", toggleAdvancedControls);
+gameTitle.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") {
+    return;
+  }
+
+  event.preventDefault();
+  toggleAdvancedControls();
+});
 
 function draw() {
   window.Makyek.renderBoard({
@@ -358,6 +370,11 @@ function fillLevelSelect(selectElement) {
     option.textContent = `Level ${index + 1}`;
     selectElement.append(option);
   });
+}
+
+function toggleAdvancedControls() {
+  const isCollapsed = controlsElement.classList.toggle("advanced-collapsed");
+  gameTitle.setAttribute("aria-expanded", String(!isCollapsed));
 }
 
 async function loadSelectedLevel() {

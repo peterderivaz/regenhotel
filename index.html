@@ -17,7 +17,7 @@
       <section class="game-layout" aria-label="Mak-yek game">
         <header class="game-header">
           <div>
-            <h1>Hotel Regen</h1>
+            <h1 id="game-title" role="button" tabindex="0" aria-controls="game-controls" aria-expanded="false">Hotel Regen</h1>
             <p id="status" class="status">Drag a piece to an empty square.</p>
           </div>
           <button id="reset-board" class="icon-button" type="button" title="Reset board" aria-label="Reset board">
@@ -25,18 +25,18 @@
           </button>
         </header>
 
-        <div class="controls" aria-label="Game options">
+        <div id="game-controls" class="controls advanced-collapsed" aria-label="Game options">
           <label class="field-control">
             <span>Level</span>
             <select id="level-select"></select>
           </label>
 
-          <label class="toggle-control">
+          <label class="toggle-control advanced-control">
             <input id="ai-enabled" type="checkbox">
             <span>Black AI</span>
           </label>
 
-          <label class="field-control">
+          <label class="field-control advanced-control">
             <span>AI type</span>
             <select id="ai-type">
               <option value="minimax">Minimax</option>
@@ -45,31 +45,31 @@
             </select>
           </label>
 
-          <label class="field-control">
+          <label class="field-control advanced-control">
             <span>Depth</span>
             <select id="ai-depth">
               <option value="2" selected>2 ply</option>
             </select>
           </label>
 
-          <label class="toggle-control">
+          <label class="toggle-control advanced-control">
             <input id="ponder-enabled" type="checkbox">
             <span>Think on White</span>
           </label>
 
-          <label class="field-control">
+          <label class="field-control advanced-control">
             <span>Think limit</span>
             <select id="ponder-depth">
               <option value="2" selected>2 ply</option>
             </select>
           </label>
 
-          <label class="toggle-control">
+          <label class="toggle-control advanced-control">
             <input id="cache-enabled" type="checkbox" checked>
             <span>Minimax cache</span>
           </label>
 
-          <label class="toggle-control">
+          <label class="toggle-control advanced-control">
             <input id="move-list-enabled" type="checkbox">
             <span>Move scores</span>
           </label>
