@@ -149,6 +149,22 @@ button {
   background: var(--panel);
 }
 
+.debug-output-control {
+  flex-basis: 100%;
+}
+
+.debug-output-control textarea {
+  width: min(100%, var(--board-width));
+  min-height: 180px;
+  padding: 10px;
+  border: 1px solid rgba(25, 34, 31, 0.24);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--panel);
+  font: 0.82rem / 1.35 monospace;
+  resize: vertical;
+}
+
 .icon-button {
   min-width: 72px;
   height: 44px;
@@ -387,16 +403,25 @@ button {
 .move-list {
   max-height: min(94vw, 720px);
   overflow: auto;
-  border: 1px solid rgba(25, 34, 31, 0.24);
-  border-radius: 8px;
-  background: var(--panel);
 }
 
 .move-list.hidden {
   display: none;
 }
 
-.move-list h2 {
+.move-score-panel {
+  margin-bottom: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(25, 34, 31, 0.24);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.move-score-panel:last-child {
+  margin-bottom: 0;
+}
+
+.move-score-panel h2 {
   position: sticky;
   top: 0;
   z-index: 1;
@@ -408,13 +433,13 @@ button {
   font-size: 0.95rem;
 }
 
-.move-list ol {
+.move-score-panel ol {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.move-list li {
+.move-score-panel li {
   display: flex;
   justify-content: space-between;
   gap: 12px;
@@ -424,7 +449,7 @@ button {
   font-size: 0.9rem;
 }
 
-.move-list li.best {
+.move-score-panel li.best {
   color: var(--ink);
   background: rgba(22, 132, 58, 0.13);
 }
@@ -470,6 +495,12 @@ button {
   border-radius: 8px;
   background: rgba(240, 216, 121, 0.32);
   outline: 2px solid rgba(240, 216, 121, 0.88);
+  outline-offset: -2px;
+}
+
+.square.selected-square {
+  border-radius: 8px;
+  outline: 2px solid rgba(248, 250, 246, 0.86);
   outline-offset: -2px;
 }
 

@@ -5,6 +5,7 @@ const HOTEL_BOARD_ROWS = [9.4, 23.3, 37.5, 51.6, 65.6, 79.2, 91.4];
 const FULL_BOARD_VIEWPORT = { left: 0, top: 0, width: 100, height: 100 };
 let currentViewport = FULL_BOARD_VIEWPORT;
 let draggedSquare = null;
+let selectedSquare = null;
 
 ["light", "dark"].forEach((piece) => {
   [false, true].forEach((isCaptured) => {
@@ -23,6 +24,7 @@ window.Makyek.renderBoard = function renderBoard({
   analysisMoves = [],
   hoverMoves = [],
 }) {
+  selectedSquare = null;
   boardElement.replaceChildren();
 
   const boardRows = Math.min(game.board.length, HOTEL_BOARD_ROWS.length);
@@ -40,7 +42,7 @@ window.Makyek.renderBoard = function renderBoard({
       }
 
       const canMove = !inputBlocked && piece && game.canMoveFrom({ row, col });
-      addDropHandlers(square, onMove, inputBlocked, game);
+      addSquareHandlers(square, onMove, inputBlocked, game);
 
       if (piece) {
         square.append(createPiece(piece, row, col, statusElement, canMove, onMoveStart, game));
@@ -160,12 +162,23 @@ function createPiece(piece, row, col, statusElement, canMove, onMoveStart, game)
 
   pieceElement.addEventListener("focus", () => {
     if (piece === "light" && canMove) {
-      highlightLegalTargets(pieceElement.closest(".board"), game, { row, col });
+      selectPiece(pieceElement.closest(".board"), game, { row, col });
     }
   });
 
   pieceElement.addEventListener("blur", () => {
-    clearLegalTargetHighlights(pieceElement.closest(".board"));
+    if (!selectedSquare || !sameSquare(selectedSquare, { row, col })) {
+      clearLegalTargetHighlights(pieceElement.closest(".board"));
+    }
+  });
+
+  pieceElement.addEventListener("click", (event) => {
+    if (piece !== "light" || !canMove) {
+      return;
+    }
+
+    event.stopPropagation();
+    selectPiece(pieceElement.closest(".board"), game, { row, col });
   });
 
   return pieceElement;
@@ -184,7 +197,7 @@ function getPieceImage(piece, isCaptured) {
   return `assets/images/${imageName}`;
 }
 
-function addDropHandlers(square, onMove, inputBlocked, game) {
+function addSquareHandlers(square, onMove, inputBlocked, game) {
   square.addEventListener("dragover", (event) => {
     if (inputBlocked) {
       return;
@@ -221,6 +234,45 @@ function addDropHandlers(square, onMove, inputBlocked, game) {
       onMove(from, to);
     }
   });
+
+  square.addEventListener("click", () => {
+    if (inputBlocked || !selectedSquare) {
+      return;
+    }
+
+    const to = {
+      row: Number(square.dataset.row),
+      col: Number(square.dataset.col),
+    };
+
+    if (!square.classList.contains("legal-target")) {
+      return;
+    }
+
+    const from = selectedSquare;
+    clearSelectedSquare(square.parentElement);
+    clearCapturePreview(square.parentElement);
+    onMove(from, to);
+  });
+}
+
+function selectPiece(boardElement, game, square) {
+  selectedSquare = square;
+  boardElement.querySelectorAll(".selected-square").forEach((selectedElement) => {
+    selectedElement.classList.remove("selected-square");
+  });
+  findSquare(boardElement, square)?.classList.add("selected-square");
+  highlightLegalTargets(boardElement, game, square);
+}
+
+function clearSelectedSquare(boardElement) {
+  selectedSquare = null;
+  if (boardElement) {
+    boardElement.querySelectorAll(".selected-square").forEach((selectedElement) => {
+      selectedElement.classList.remove("selected-square");
+    });
+  }
+  clearLegalTargetHighlights(boardElement);
 }
 
 function highlightLegalTargets(boardElement, game, from) {

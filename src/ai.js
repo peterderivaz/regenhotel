@@ -1,8 +1,14 @@
 window.Makyek = window.Makyek || {};
 
 const BEST_MOVE_SCORE_WINDOW = 3;
+const TERMINAL_DEPTH_SCORE_STEP = Math.max(10, BEST_MOVE_SCORE_WINDOW + 1);
 
 window.Makyek.chooseAiMove = function chooseAiMove(game, options) {
+  const result = window.Makyek.chooseAiMoveResult(game, options);
+  return result ? result.move : null;
+};
+
+window.Makyek.chooseAiMoveResult = function chooseAiMoveResult(game, options) {
   const player = "dark";
   const board = game.board;
   const moves = window.Makyek.getAllLegalMoves(board, player);
@@ -13,14 +19,20 @@ window.Makyek.chooseAiMove = function chooseAiMove(game, options) {
   }
 
   if (options.type === "random") {
-    return moves[Math.floor(Math.random() * moves.length)];
+    const move = moves[Math.floor(Math.random() * moves.length)];
+    return {
+      move,
+      moves: [move],
+      scoredMoves: moves.map((entry) => ({ move: entry, score: 0 })),
+      score: 0,
+    };
   }
 
   if (options.type === "greedy") {
-    return chooseGreedyMove(board, moves, player);
+    return chooseGreedyResult(board, moves, player);
   }
 
-  return chooseMinimaxMove(board, moves, player, options.depth, cache);
+  return chooseMinimaxResult(board, moves, player, options.depth, null, cache);
 };
 
 window.Makyek.chooseAiMoveAtDepth = function chooseAiMoveAtDepth(
@@ -40,8 +52,8 @@ window.Makyek.chooseAiMoveAtDepth = function chooseAiMoveAtDepth(
   return chooseMinimaxResult(board, moves, player, depth, stats, cache);
 };
 
-function chooseGreedyMove(board, moves, player) {
-  return bestMoveByScore(moves, (move) => {
+function chooseGreedyResult(board, moves, player) {
+  return scoredResultByScore(moves, (move) => {
     const result = window.Makyek.applyMove(board, move, player);
     return result.captured * 1000 + evaluateBoard(result.board, player);
   });
@@ -61,7 +73,7 @@ function chooseMinimaxResult(board, moves, player, depth, stats, cache) {
 
     if (result.winner) {
       countPosition(stats);
-      return Infinity;
+      return winnerScore(result.winner, player, searchDepth);
     }
 
     return minimax(
@@ -90,11 +102,11 @@ function minimax(board, playerToMove, maximizingPlayer, depth, alpha, beta, stat
   const opponent = window.Makyek.otherPlayer(maximizingPlayer);
 
   if (window.Makyek.countPieces(board, opponent) === 0) {
-    return rememberScore(cache, cacheKey, Infinity);
+    return rememberScore(cache, cacheKey, winnerScore(maximizingPlayer, maximizingPlayer, depth));
   }
 
   if (window.Makyek.countPieces(board, maximizingPlayer) === 0) {
-    return rememberScore(cache, cacheKey, -Infinity);
+    return rememberScore(cache, cacheKey, winnerScore(opponent, maximizingPlayer, depth));
   }
 
   if (depth === 0) {
@@ -245,6 +257,6 @@ function evaluateBoard(board, player) {
 }
 
 function winnerScore(winner, maximizingPlayer, depth) {
-  const score = 100000 + depth;
+  const score = 100000 + depth * TERMINAL_DEPTH_SCORE_STEP;
   return winner === maximizingPlayer ? score : -score;
 }

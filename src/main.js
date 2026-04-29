@@ -14,6 +14,9 @@ const ponderEnabledInput = document.querySelector("#ponder-enabled");
 const ponderDepthSelect = document.querySelector("#ponder-depth");
 const cacheEnabledInput = document.querySelector("#cache-enabled");
 const moveListEnabledInput = document.querySelector("#move-list-enabled");
+const blackDebugButton = document.querySelector("#black-debug-print");
+const blackDebugOutput = document.querySelector("#black-debug-output");
+const blackDebugOutputControl = document.querySelector(".debug-output-control");
 
 const game = window.Makyek.createGame();
 let aiTimer = null;
@@ -21,6 +24,9 @@ let ponderWorker = null;
 let ponderRunId = 0;
 let analysisMoves = [];
 let analysisMoveScores = [];
+let blackAnalysisMoveScores = [];
+let blackAnalysisDepth = null;
+let blackDebugSnapshot = null;
 let hoveredMove = null;
 let levelComplete = false;
 
@@ -47,9 +53,9 @@ function draw() {
     inputBlocked: isAiTurn() || levelComplete,
     analysisMoves,
     hoverMoves: hoveredMove ? [{ move: hoveredMove }] : [],
-    onMoveStart: clearPondering,
+    onMoveStart: clearPonderPreview,
     onMove: async (from, to) => {
-      clearPondering();
+      clearPonderPreview();
       const result = game.movePiece(from, to);
       statusElement.textContent = result.message;
       if (result.ok) {
@@ -62,7 +68,9 @@ function draw() {
 
       draw();
       scheduleAiMove();
-      schedulePondering();
+      if (shouldPonder()) {
+        schedulePondering();
+      }
     },
   });
 
@@ -71,6 +79,7 @@ function draw() {
 resetButton.addEventListener("click", () => {
   clearAiTimer();
   clearPondering();
+  clearBlackDebugSnapshot();
   levelComplete = false;
   game.reset();
   statusElement.textContent = game.helpText || "Board reset. Light to move.";
@@ -111,6 +120,7 @@ ponderDepthSelect.addEventListener("change", () => {
   draw();
   schedulePondering();
 });
+blackDebugButton.addEventListener("click", printBlackDebugSnapshot);
 
 function isAiTurn() {
   return aiEnabledInput.checked && game.darkCanMove && game.currentPlayer === "dark" && !game.winner;
@@ -127,11 +137,13 @@ function scheduleAiMove() {
   draw();
 
   aiTimer = window.setTimeout(async () => {
-    const move = window.Makyek.chooseAiMove(game, {
+    const aiDepth = Number(aiDepthSelect.value);
+    const aiResult = window.Makyek.chooseAiMoveResult(game, {
       type: aiTypeSelect.value,
-      depth: Number(aiDepthSelect.value),
+      depth: aiDepth,
       cacheEnabled: cacheEnabledInput.checked,
     });
+    const move = aiResult ? aiResult.move : null;
 
     if (!move) {
       statusElement.textContent = "Black AI has no legal move.";
@@ -139,7 +151,10 @@ function scheduleAiMove() {
       return;
     }
 
+    rememberBlackAnalysis(aiResult, aiDepth);
+    const boardBeforeMove = cloneBoard(game.board);
     const result = game.movePiece(move.from, move.to);
+    rememberBlackDebugSnapshot(boardBeforeMove, cloneBoard(game.board), aiResult, aiDepth);
     statusElement.textContent = `Black AI: ${result.message}`;
     await window.Makyek.animateAiMove(boardElement, move, result.capturedSquares);
 
@@ -247,10 +262,19 @@ function shouldPonder() {
 function clearPondering() {
   analysisMoves = [];
   analysisMoveScores = [];
+  blackAnalysisMoveScores = [];
+  blackAnalysisDepth = null;
   hoveredMove = null;
   ponderRunId += 1;
   clearPonderWorker();
   renderMoveList();
+}
+
+function clearPonderPreview() {
+  analysisMoves = [];
+  hoveredMove = null;
+  ponderRunId += 1;
+  clearPonderWorker();
 }
 
 function clearPonderWorker() {
@@ -258,6 +282,107 @@ function clearPonderWorker() {
     ponderWorker.terminate();
     ponderWorker = null;
   }
+}
+
+function rememberBlackAnalysis(result, depth) {
+  const bestMoves = result.moves || (result.move ? [result.move] : []);
+
+  blackAnalysisDepth = depth;
+  blackAnalysisMoveScores = (result.scoredMoves || bestMoves.map((move) => ({
+    move,
+    score: result.score,
+  }))).map((entry) => ({
+    depth,
+    move: entry.move,
+    score: entry.score,
+    isBest: bestMoves.some((move) => sameMove(move, entry.move)),
+  }));
+  renderMoveList(analysisMoveScores[0] ? analysisMoveScores[0].depth : null);
+}
+
+function rememberBlackDebugSnapshot(boardBefore, boardAfter, result, depth) {
+  blackDebugSnapshot = {
+    level: levelSelect.value,
+    aiType: aiTypeSelect.value,
+    depth,
+    cacheEnabled: cacheEnabledInput.checked,
+    boardBefore,
+    boardAfter,
+    result,
+  };
+}
+
+function printBlackDebugSnapshot() {
+  blackDebugOutputControl.hidden = false;
+  blackDebugOutput.value = formatBlackDebugSnapshot();
+  blackDebugOutput.focus();
+  blackDebugOutput.select();
+}
+
+function clearBlackDebugSnapshot() {
+  blackDebugSnapshot = null;
+  blackDebugOutput.value = "";
+  blackDebugOutputControl.hidden = true;
+}
+
+function formatBlackDebugSnapshot() {
+  if (!blackDebugSnapshot) {
+    return "No Black AI move has been recorded yet.";
+  }
+
+  const { level, aiType, depth, cacheEnabled, boardBefore, boardAfter, result } = blackDebugSnapshot;
+  const bestMoves = result.moves || (result.move ? [result.move] : []);
+  const scoredMoves = result.scoredMoves || [];
+  const lines = [
+    "BLACK AI DEBUG",
+    `level=${level}`,
+    `aiType=${aiType}`,
+    `depth=${depth}`,
+    `cacheEnabled=${cacheEnabled}`,
+    `chosen=${result.move ? formatMove(result.move) : "none"}`,
+    `score=${formatScore(result.score)}`,
+    "",
+    "boardBeforeBlack:",
+    ...formatBoardForDebug(boardBefore),
+    "",
+    "boardAfterBlack:",
+    ...formatBoardForDebug(boardAfter),
+    "",
+    "blackMoves:",
+  ];
+
+  scoredMoves.forEach((entry, index) => {
+    const marker = bestMoves.some((move) => sameMove(move, entry.move)) ? "*" : " ";
+    lines.push(`${String(index + 1).padStart(2, "0")}${marker} ${formatMove(entry.move)} score=${formatScore(entry.score)}`);
+  });
+
+  if (scoredMoves.length === 0) {
+    lines.push("(no scored moves)");
+  }
+
+  return lines.join("\n");
+}
+
+function formatBoardForDebug(board) {
+  return board.map((row) => row.map((cell) => {
+    if (cell === "#") {
+      return "#";
+    }
+
+    if (cell === "light") {
+      return "F";
+    }
+
+    if (cell === "dark") {
+      return "g";
+    }
+
+    return ".";
+  }).join(""));
+}
+
+function cloneBoard(board) {
+  return board.map((row) => row.slice());
 }
 
 function formatMove(move) {
@@ -273,20 +398,36 @@ function renderMoveList(depth) {
     return;
   }
 
-  const heading = document.createElement("h2");
-  heading.textContent = depth ? `White depth ${depth}` : "White moves";
-  moveListElement.append(heading);
+  moveListElement.append(createMoveScorePanel(
+    depth ? `White depth ${depth}` : "White moves",
+    analysisMoveScores,
+  ));
 
-  if (analysisMoveScores.length === 0) {
+  if (blackAnalysisMoveScores.length > 0) {
+    moveListElement.append(createMoveScorePanel(
+      blackAnalysisDepth ? `Black depth ${blackAnalysisDepth}` : "Black moves",
+      blackAnalysisMoveScores,
+    ));
+  }
+}
+
+function createMoveScorePanel(headingText, moveScores) {
+  const panel = document.createElement("section");
+  const heading = document.createElement("h2");
+  panel.className = "move-score-panel";
+  heading.textContent = headingText;
+  panel.append(heading);
+
+  if (moveScores.length === 0) {
     const empty = document.createElement("p");
     empty.className = "move-list-empty";
     empty.textContent = "No scores yet.";
-    moveListElement.append(empty);
-    return;
+    panel.append(empty);
+    return panel;
   }
 
   const list = document.createElement("ol");
-  analysisMoveScores.forEach((entry) => {
+  moveScores.forEach((entry) => {
     const item = document.createElement("li");
     const moveText = document.createElement("span");
     const scoreText = document.createElement("strong");
@@ -314,7 +455,8 @@ function renderMoveList(depth) {
     item.append(moveText, scoreText);
     list.append(item);
   });
-  moveListElement.append(list);
+  panel.append(list);
+  return panel;
 }
 
 function sameMove(firstMove, secondMove) {
@@ -559,6 +701,7 @@ function toggleAdvancedControls() {
 async function loadSelectedLevel() {
   clearAiTimer();
   clearPondering();
+  clearBlackDebugSnapshot();
   levelComplete = false;
   playAreaElement.classList.remove("start-mode");
   gameHeaderElement.hidden = false;
