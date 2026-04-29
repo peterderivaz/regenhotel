@@ -21,6 +21,7 @@ let ponderRunId = 0;
 let analysisMoves = [];
 let analysisMoveScores = [];
 let hoveredMove = null;
+let levelComplete = false;
 
 fillDepthSelect(aiDepthSelect);
 fillDepthSelect(ponderDepthSelect);
@@ -41,7 +42,7 @@ function draw() {
     boardElement,
     statusElement,
     game,
-    inputBlocked: isAiTurn(),
+    inputBlocked: isAiTurn() || levelComplete,
     analysisMoves,
     hoverMoves: hoveredMove ? [{ move: hoveredMove }] : [],
     onMoveStart: clearPondering,
@@ -52,16 +53,26 @@ function draw() {
       if (result.ok) {
         await window.Makyek.animateAiMove(boardElement, { from, to }, result.capturedSquares);
       }
+
+      if (result.ok && completeLevelIfNoGoblinsRemain()) {
+        return;
+      }
+
       draw();
       scheduleAiMove();
       schedulePondering();
     },
   });
+
+  if (levelComplete) {
+    boardElement.append(createLevelCompletePrompt());
+  }
 }
 
 resetButton.addEventListener("click", () => {
   clearAiTimer();
   clearPondering();
+  levelComplete = false;
   game.reset();
   statusElement.textContent = game.helpText || "Board reset. Light to move.";
   draw();
@@ -132,6 +143,11 @@ function scheduleAiMove() {
     const result = game.movePiece(move.from, move.to);
     statusElement.textContent = `Black AI: ${result.message}`;
     await window.Makyek.animateAiMove(boardElement, move, result.capturedSquares);
+
+    if (result.ok && completeLevelIfNoGoblinsRemain()) {
+      return;
+    }
+
     draw();
     scheduleAiMove();
     schedulePondering();
@@ -372,6 +388,51 @@ function fillLevelSelect(selectElement) {
   });
 }
 
+function completeLevelIfNoGoblinsRemain() {
+  if (window.Makyek.countPieces(game.board, "dark") > 0) {
+    return false;
+  }
+
+  levelComplete = true;
+  clearAiTimer();
+  clearPondering();
+  statusElement.textContent = "Brilliant work. Click the board to continue to the next level.";
+  draw();
+  return true;
+}
+
+function createLevelCompletePrompt() {
+  const prompt = document.createElement("button");
+  const levelNumber = levelSelect.selectedIndex + 1;
+  const hasNextLevel = levelSelect.selectedIndex < levelSelect.options.length - 1;
+
+  prompt.className = "level-complete-prompt";
+  prompt.type = "button";
+  prompt.textContent = hasNextLevel
+    ? `Level ${levelNumber} complete. Click for Level ${levelNumber + 1}.`
+    : "All levels complete. Click to play again.";
+  prompt.addEventListener("click", loadNextLevel);
+
+  return prompt;
+}
+
+async function loadNextLevel() {
+  if (!levelComplete) {
+    return;
+  }
+
+  const nextIndex = levelSelect.selectedIndex + 1;
+  levelComplete = false;
+
+  if (nextIndex < levelSelect.options.length) {
+    levelSelect.selectedIndex = nextIndex;
+  } else {
+    levelSelect.selectedIndex = 0;
+  }
+
+  await loadSelectedLevel();
+}
+
 function toggleAdvancedControls() {
   const isCollapsed = controlsElement.classList.toggle("advanced-collapsed");
   gameTitle.setAttribute("aria-expanded", String(!isCollapsed));
@@ -380,6 +441,7 @@ function toggleAdvancedControls() {
 async function loadSelectedLevel() {
   clearAiTimer();
   clearPondering();
+  levelComplete = false;
   statusElement.textContent = "Loading level...";
 
   try {

@@ -168,6 +168,28 @@ button {
   pointer-events: none;
 }
 
+.level-complete-prompt {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  padding: clamp(18px, 5vw, 40px);
+  border: 0;
+  color: #f8faf6;
+  background: rgba(25, 34, 31, 0.62);
+  font-size: clamp(1.35rem, 4vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  cursor: pointer;
+}
+
+.level-complete-prompt:hover,
+.level-complete-prompt:focus-visible {
+  background: rgba(25, 34, 31, 0.72);
+}
+
 .play-area {
   display: grid;
   grid-template-columns: minmax(0, 720px) minmax(220px, 280px);
