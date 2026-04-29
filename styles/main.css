@@ -1,6 +1,7 @@
 :root {
   color-scheme: light;
   --board-width: 720px;
+  --board-vertical-chrome: 190px;
   --side-panel-width: 280px;
   --page: #eef2ed;
   --ink: #19221f;
@@ -146,7 +147,11 @@ button {
 }
 
 .board {
-  width: min(100%, var(--board-width));
+  width: min(
+    100%,
+    var(--board-width),
+    calc((100dvh - var(--board-vertical-chrome)) * var(--board-fit-ratio, 1))
+  );
   aspect-ratio: var(--board-aspect, 1);
   position: relative;
   border: 3px solid var(--line);
@@ -473,7 +478,16 @@ button {
 
 @media (max-width: 520px) {
   .app-shell {
+    min-height: 100dvh;
     padding: 16px;
     place-items: start center;
+  }
+
+  .board {
+    width: min(
+      100%,
+      var(--board-width),
+      calc((100dvh - 150px) * var(--board-fit-ratio, 1))
+    );
   }
 }

@@ -370,6 +370,7 @@ function applyBoardViewport(boardElement, viewport) {
   const positionY = maxOffsetY === 0 ? 50 : (viewport.top / maxOffsetY) * 100;
 
   boardElement.style.setProperty("--board-aspect", `${viewport.width} / ${viewport.height}`);
+  boardElement.style.setProperty("--board-fit-ratio", String(viewport.width / viewport.height));
   boardElement.style.setProperty("--hotel-bg-width", `${scaleX * 100}%`);
   boardElement.style.setProperty("--hotel-bg-height", `${scaleY * 100}%`);
   boardElement.style.setProperty("--hotel-bg-x", `${positionX}%`);
