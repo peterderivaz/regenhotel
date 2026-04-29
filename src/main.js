@@ -31,10 +31,13 @@ function draw() {
     analysisMoves,
     hoverMoves: hoveredMove ? [{ move: hoveredMove }] : [],
     onMoveStart: clearPondering,
-    onMove: (from, to) => {
+    onMove: async (from, to) => {
       clearPondering();
       const result = game.movePiece(from, to);
       statusElement.textContent = result.message;
+      if (result.ok) {
+        await window.Makyek.animateAiMove(boardElement, { from, to }, result.capturedSquares);
+      }
       draw();
       scheduleAiMove();
       schedulePondering();
