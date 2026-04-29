@@ -66,9 +66,6 @@ function draw() {
     },
   });
 
-  if (levelComplete) {
-    boardElement.append(createLevelCompletePrompt());
-  }
 }
 
 resetButton.addEventListener("click", () => {
@@ -398,24 +395,9 @@ function completeLevelIfNoGoblinsRemain() {
   levelComplete = true;
   clearAiTimer();
   clearPondering();
-  statusElement.textContent = "Brilliant work. Click the board to continue to the next level.";
-  draw();
+  statusElement.textContent = "Brilliant work.";
+  showNextLevelScreen();
   return true;
-}
-
-function createLevelCompletePrompt() {
-  const prompt = document.createElement("button");
-  const levelNumber = levelSelect.selectedIndex + 1;
-  const hasNextLevel = levelSelect.selectedIndex < levelSelect.options.length - 1;
-
-  prompt.className = "level-complete-prompt";
-  prompt.type = "button";
-  prompt.textContent = hasNextLevel
-    ? `Level ${levelNumber} complete. Click for Level ${levelNumber + 1}.`
-    : "All levels complete. Click to play again.";
-  prompt.addEventListener("click", loadNextLevel);
-
-  return prompt;
 }
 
 function showStartScreen() {
@@ -430,11 +412,11 @@ function showStartScreen() {
   boardElement.classList.add("start-screen");
   boardElement.style.setProperty("--board-aspect", "9 / 16");
   boardElement.style.setProperty("--board-fit-ratio", "0.5625");
-  boardElement.replaceChildren(createStartButton());
+  boardElement.replaceChildren(createStartButton(0, "Click to start"));
   statusElement.textContent = "Click start to begin.";
 }
 
-function createStartButton() {
+function createStartButton(levelIndex, text) {
   const button = document.createElement("button");
   const image = document.createElement("img");
   const label = document.createElement("span");
@@ -444,22 +426,49 @@ function createStartButton() {
   button.setAttribute("aria-label", "Start game");
   image.src = "assets/images/Poster_regen.png";
   image.alt = "Regen Hotel";
-  label.textContent = "Click to start";
+  label.textContent = text;
   button.append(image, label);
-  button.addEventListener("click", startFirstLevel);
+  button.addEventListener("click", () => startLevel(levelIndex));
 
   return button;
 }
 
-async function startFirstLevel() {
+async function startLevel(levelIndex) {
   const startRect = boardElement.getBoundingClientRect();
   const overlay = createPosterTransitionOverlay(startRect);
 
   gameHeaderElement.hidden = false;
   controlsElement.hidden = false;
-  levelSelect.selectedIndex = 0;
+  levelSelect.selectedIndex = levelIndex;
   await loadSelectedLevel();
   await animateStartPosterToHeader(overlay);
+}
+
+async function showNextLevelScreen() {
+  const nextLevelIndex = getNextLevelIndex();
+  const overlay = createPosterTransitionOverlay(gameHeaderElement.getBoundingClientRect());
+
+  overlay.classList.add("poster-transition-active");
+  await showLevelIntroScreen(nextLevelIndex);
+  await animateHeaderPosterToStart(overlay);
+}
+
+async function showLevelIntroScreen(levelIndex) {
+  const level = await loadLevelByIndex(levelIndex);
+  const prefix = levelIndex === 0 ? "Play again. " : `Level ${levelIndex + 1}. `;
+  const text = `${prefix}${level.helpText || ""} Click to start.`;
+
+  levelComplete = false;
+  playAreaElement.classList.add("single-column");
+  playAreaElement.classList.add("start-mode");
+  gameHeaderElement.hidden = true;
+  controlsElement.hidden = true;
+  moveListElement.classList.add("hidden");
+  boardElement.classList.add("start-screen");
+  boardElement.style.setProperty("--board-aspect", "9 / 16");
+  boardElement.style.setProperty("--board-fit-ratio", "0.5625");
+  boardElement.replaceChildren(createStartButton(levelIndex, text));
+  statusElement.textContent = text;
 }
 
 function createPosterTransitionOverlay(startRect) {
@@ -492,6 +501,22 @@ function animateStartPosterToHeader(overlay) {
   });
 }
 
+function animateHeaderPosterToStart(overlay) {
+  const endRect = boardElement.getBoundingClientRect();
+
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => {
+      overlay.classList.remove("poster-transition-active");
+      setPosterTransitionRect(overlay, endRect);
+    });
+
+    window.setTimeout(() => {
+      overlay.remove();
+      resolve();
+    }, 720);
+  });
+}
+
 function setPosterTransitionRect(element, rect) {
   element.style.left = `${rect.left}px`;
   element.style.top = `${rect.top}px`;
@@ -499,21 +524,19 @@ function setPosterTransitionRect(element, rect) {
   element.style.height = `${rect.height}px`;
 }
 
-async function loadNextLevel() {
-  if (!levelComplete) {
-    return;
-  }
-
+function getNextLevelIndex() {
   const nextIndex = levelSelect.selectedIndex + 1;
-  levelComplete = false;
 
   if (nextIndex < levelSelect.options.length) {
-    levelSelect.selectedIndex = nextIndex;
-  } else {
-    levelSelect.selectedIndex = 0;
+    return nextIndex;
   }
 
-  await loadSelectedLevel();
+  return 0;
+}
+
+function loadLevelByIndex(levelIndex) {
+  const option = levelSelect.options[levelIndex];
+  return window.Makyek.loadLevel(option ? option.value : levelSelect.options[0].value);
 }
 
 function toggleAdvancedControls() {
