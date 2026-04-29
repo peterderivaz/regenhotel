@@ -1,7 +1,8 @@
 :root {
   color-scheme: light;
   --board-width: 720px;
-  --board-vertical-chrome: 360px;
+  --board-vertical-chrome: 372px;
+  --poster-vertical-chrome: 52px;
   --side-panel-width: 280px;
   --page: #eef2ed;
   --ink: #19221f;
@@ -27,7 +28,8 @@
 
 body {
   margin: 0;
-  min-height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   color: var(--ink);
   font-family: Arial, Helvetica, sans-serif;
   background: var(--page);
@@ -38,7 +40,7 @@ button {
 }
 
 .app-shell {
-  min-height: 100vh;
+  height: 100dvh;
   display: grid;
   place-items: center;
   padding: 24px;
@@ -171,7 +173,7 @@ button {
   width: min(
     100%,
     var(--board-width),
-    calc((100dvh - var(--board-vertical-chrome)) * var(--board-fit-ratio, 1))
+    max(0px, calc((100dvh - var(--board-vertical-chrome)) * var(--board-fit-ratio, 1) - 8px))
   );
   aspect-ratio: var(--board-aspect, 1);
   position: relative;
@@ -197,7 +199,11 @@ button {
 }
 
 .board.start-screen {
-  width: min(100%, var(--board-width));
+  width: min(
+    100%,
+    var(--board-width),
+    max(0px, calc((100dvh - var(--poster-vertical-chrome)) * 0.5625 - 8px))
+  );
   border: 0;
   background: #0d1110;
 }
@@ -579,7 +585,7 @@ button {
 
 @media (max-width: 520px) {
   .app-shell {
-    min-height: 100dvh;
+    height: 100dvh;
     padding: 16px;
     place-items: start center;
   }
@@ -588,7 +594,15 @@ button {
     width: min(
       100%,
       var(--board-width),
-      calc((100dvh - 150px) * var(--board-fit-ratio, 1))
+      max(0px, calc((100dvh - 158px) * var(--board-fit-ratio, 1) - 8px))
+    );
+  }
+
+  .board.start-screen {
+    width: min(
+      100%,
+      var(--board-width),
+      max(0px, calc((100dvh - 40px) * 0.5625 - 8px))
     );
   }
 }
