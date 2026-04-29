@@ -1,5 +1,7 @@
 window.Makyek = window.Makyek || {};
 
+const BEST_MOVE_SCORE_WINDOW = 3;
+
 window.Makyek.chooseAiMove = function chooseAiMove(game, options) {
   const player = "dark";
   const board = game.board;
@@ -47,14 +49,14 @@ function chooseGreedyMove(board, moves, player) {
 
 function chooseMinimaxMove(board, moves, player, depth, cache) {
   const result = chooseMinimaxResult(board, moves, player, depth, null, cache);
-  return result ? result.move : null;
+  return result ? randomMove(result.moves) : null;
 }
 
 function chooseMinimaxResult(board, moves, player, depth, stats, cache) {
   const searchDepth = Math.max(1, Math.min(Number(depth) || 1, 10));
   const orderedMoves = orderMoves(board, moves, player);
 
-  return bestResultByScore(orderedMoves, (move) => {
+  return scoredResultByScore(orderedMoves, (move) => {
     const result = window.Makyek.applyMove(board, move, player);
 
     if (result.winner) {
@@ -187,27 +189,35 @@ function encodeBoard(board) {
 }
 
 function bestMoveByScore(moves, scoreMove) {
-  const result = bestResultByScore(moves, scoreMove);
-  return result ? result.move : null;
+  const result = scoredResultByScore(moves, scoreMove);
+  return result ? randomMove(result.moves) : null;
 }
 
-function bestResultByScore(moves, scoreMove) {
-  let bestMove = moves[0];
+function scoredResultByScore(moves, scoreMove) {
   let bestScore = -Infinity;
+  const scoredMoves = [];
 
   moves.forEach((move) => {
     const score = scoreMove(move);
-
-    if (score > bestScore || (score === bestScore && Math.random() < 0.5)) {
-      bestMove = move;
-      bestScore = score;
-    }
+    scoredMoves.push({ move, score });
+    bestScore = Math.max(bestScore, score);
   });
 
+  const sortedMoves = scoredMoves.sort((a, b) => b.score - a.score);
+  const bestMoves = sortedMoves
+    .filter((entry) => bestScore - entry.score <= BEST_MOVE_SCORE_WINDOW)
+    .map((entry) => entry.move);
+
   return {
-    move: bestMove,
+    move: randomMove(bestMoves),
+    moves: bestMoves,
+    scoredMoves: sortedMoves,
     score: bestScore,
   };
+}
+
+function randomMove(moves) {
+  return moves[Math.floor(Math.random() * moves.length)];
 }
 
 function orderMoves(board, moves, player) {
@@ -231,7 +241,7 @@ function evaluateBoard(board, player) {
     window.Makyek.getAllLegalMoves(board, player).length -
     window.Makyek.getAllLegalMoves(board, opponent).length;
 
-  return material * 100 + mobility * 3;
+  return material * 100 + mobility * 1;
 }
 
 function winnerScore(winner, maximizingPlayer, depth) {

@@ -62,9 +62,17 @@
             <input id="cache-enabled" type="checkbox" checked>
             <span>Minimax cache</span>
           </label>
+
+          <label class="toggle-control">
+            <input id="move-list-enabled" type="checkbox">
+            <span>Move scores</span>
+          </label>
         </div>
 
-        <div id="board" class="board" aria-label="8 by 8 Mak-yek board"></div>
+        <div class="play-area">
+          <div id="board" class="board" aria-label="8 by 8 Mak-yek board"></div>
+          <aside id="move-list" class="move-list hidden" aria-label="White thinking move scores"></aside>
+        </div>
       </section>
     </main>
   </body>

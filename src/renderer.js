@@ -8,6 +8,7 @@ window.Makyek.renderBoard = function renderBoard({
   onMoveStart,
   inputBlocked,
   analysisMoves = [],
+  hoverMoves = [],
 }) {
   boardElement.replaceChildren();
 
@@ -18,10 +19,7 @@ window.Makyek.renderBoard = function renderBoard({
       const square = createSquare(row, col);
       const piece = game.board[row][col];
       const canMove = !inputBlocked && piece && game.canMoveFrom({ row, col });
-      const squareAnalysis = analysisMoves.filter((entry) => touchesSquare(entry.move, row, col));
-
       addDropHandlers(square, onMove, inputBlocked);
-      addAnalysisMarkers(square, squareAnalysis, row, col);
 
       if (piece) {
         square.append(createPiece(piece, row, col, statusElement, canMove, onMoveStart));
@@ -29,6 +27,14 @@ window.Makyek.renderBoard = function renderBoard({
 
       boardElement.append(square);
     }
+  }
+
+  if (analysisMoves.length > 0) {
+    boardElement.append(createMoveArrows(analysisMoves, "move-arrows"));
+  }
+
+  if (hoverMoves.length > 0) {
+    boardElement.append(createMoveArrows(hoverMoves, "move-arrows hover-arrows"));
   }
 };
 
@@ -183,30 +189,62 @@ function readDragData(event) {
   }
 }
 
-function addAnalysisMarkers(square, analysisMoves, row, col) {
-  analysisMoves.forEach((entry) => {
-    const marker = document.createElement("span");
-    const role = sameSquare(entry.move.from, row, col) ? "from" : "to";
-    marker.className = `analysis-marker ${role}`;
-    marker.style.setProperty("--marker-depth", entry.depth - 1);
-    marker.style.setProperty("--marker-color", depthColor(entry.depth));
-    marker.textContent = `d${entry.depth}`;
-    marker.title = `Depth ${entry.depth}: ${squareLabel(entry.move.from.row, entry.move.from.col)} to ${squareLabel(entry.move.to.row, entry.move.to.col)}`;
-    square.append(marker);
+function createMoveArrows(analysisMoves, className) {
+  const svgNamespace = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(svgNamespace, "svg");
+  const defs = document.createElementNS(svgNamespace, "defs");
+  const marker = document.createElementNS(svgNamespace, "marker");
+  const markerPath = document.createElementNS(svgNamespace, "path");
+
+  className.split(" ").forEach((name) => {
+    svg.classList.add(name);
   });
+  svg.setAttribute("viewBox", "0 0 100 100");
+  svg.setAttribute("preserveAspectRatio", "none");
+  svg.setAttribute("width", "100%");
+  svg.setAttribute("height", "100%");
+  marker.setAttribute("id", "best-move-arrowhead");
+  marker.setAttribute("markerWidth", "5");
+  marker.setAttribute("markerHeight", "5");
+  marker.setAttribute("refX", "4");
+  marker.setAttribute("refY", "2.5");
+  marker.setAttribute("orient", "auto");
+  markerPath.setAttribute("d", "M0,0 L5,2.5 L0,5 Z");
+  markerPath.setAttribute("fill", "#16843a");
+  marker.append(markerPath);
+  defs.append(marker);
+  svg.append(defs);
+
+  analysisMoves.forEach((entry) => {
+    const line = document.createElementNS(svgNamespace, "line");
+    const title = document.createElementNS(svgNamespace, "title");
+    const from = squareCenter(entry.move.from);
+    const to = squareCenter(entry.move.to);
+
+    line.setAttribute("x1", from.x);
+    line.setAttribute("y1", from.y);
+    line.setAttribute("x2", to.x);
+    line.setAttribute("y2", to.y);
+    line.setAttribute("stroke", "#16843a");
+    line.setAttribute("stroke-width", "1.8");
+    line.setAttribute("stroke-linecap", "round");
+    line.setAttribute("opacity", "0.86");
+    line.setAttribute("marker-end", "url(#best-move-arrowhead)");
+    title.textContent = `Depth ${entry.depth}: ${squareLabel(entry.move.from.row, entry.move.from.col)} to ${squareLabel(entry.move.to.row, entry.move.to.col)}`;
+    line.append(title);
+    svg.append(line);
+  });
+
+  return svg;
 }
 
-function touchesSquare(move, row, col) {
-  return sameSquare(move.from, row, col) || sameSquare(move.to, row, col);
-}
+function squareCenter(square) {
+  const boardSize = window.Makyek.BOARD_SIZE;
 
-function sameSquare(square, row, col) {
-  return square.row === row && square.col === col;
-}
-
-function depthColor(depth) {
-  const hue = (190 + (depth - 1) * 37) % 360;
-  return `hsl(${hue} 78% 72%)`;
+  return {
+    x: ((square.col + 0.5) / boardSize) * 100,
+    y: ((square.row + 0.5) / boardSize) * 100,
+  };
 }
 
 function squareLabel(row, col) {

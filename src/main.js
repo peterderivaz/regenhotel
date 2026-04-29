@@ -1,18 +1,23 @@
 const boardElement = document.querySelector("#board");
+const playAreaElement = document.querySelector(".play-area");
 const statusElement = document.querySelector("#status");
 const resetButton = document.querySelector("#reset-board");
+const moveListElement = document.querySelector("#move-list");
 const aiEnabledInput = document.querySelector("#ai-enabled");
 const aiTypeSelect = document.querySelector("#ai-type");
 const aiDepthSelect = document.querySelector("#ai-depth");
 const ponderEnabledInput = document.querySelector("#ponder-enabled");
 const ponderDepthSelect = document.querySelector("#ponder-depth");
 const cacheEnabledInput = document.querySelector("#cache-enabled");
+const moveListEnabledInput = document.querySelector("#move-list-enabled");
 
 const game = window.Makyek.createGame();
 let aiTimer = null;
 let ponderWorker = null;
 let ponderRunId = 0;
 let analysisMoves = [];
+let analysisMoveScores = [];
+let hoveredMove = null;
 
 fillDepthSelect(aiDepthSelect);
 fillDepthSelect(ponderDepthSelect);
@@ -24,6 +29,7 @@ function draw() {
     game,
     inputBlocked: isAiTurn(),
     analysisMoves,
+    hoverMoves: hoveredMove ? [{ move: hoveredMove }] : [],
     onMoveStart: clearPondering,
     onMove: (from, to) => {
       clearPondering();
@@ -60,6 +66,9 @@ cacheEnabledInput.addEventListener("change", () => {
   draw();
   scheduleAiMove();
   schedulePondering();
+});
+moveListEnabledInput.addEventListener("change", () => {
+  renderMoveList(analysisMoveScores[0] ? analysisMoveScores[0].depth : null);
 });
 ponderEnabledInput.addEventListener("change", () => {
   clearPondering();
@@ -120,7 +129,9 @@ function schedulePondering() {
 
   if (!shouldPonder()) {
     analysisMoves = [];
+    analysisMoveScores = [];
     draw();
+    renderMoveList();
     return;
   }
 
@@ -152,14 +163,29 @@ function schedulePondering() {
       return;
     }
 
-    analysisMoves = analysisMoves.filter((entry) => entry.depth !== depth);
-    analysisMoves.push({
+    const bestMoves = result.moves || (result.move ? [result.move] : []);
+
+    if (bestMoves.length === 0) {
+      return;
+    }
+
+    analysisMoves = bestMoves.map((move) => ({
       depth,
-      move: result.move,
+      move,
       score: result.score,
-    });
-    statusElement.textContent = `White hint depth ${depth}: ${formatMove(result.move)}. ${formatRate(positionsPerSecond)} positions/s, ${formatCount(cacheHits)} cache hits.`;
+    }));
+    analysisMoveScores = (result.scoredMoves || bestMoves.map((move) => ({
+      move,
+      score: result.score,
+    }))).map((entry) => ({
+      depth,
+      move: entry.move,
+      score: entry.score,
+      isBest: bestMoves.some((move) => sameMove(move, entry.move)),
+    }));
+    statusElement.textContent = `White hint depth ${depth}: ${formatMove(result.move || bestMoves[0])} (${formatCount(bestMoves.length)} best). ${formatRate(positionsPerSecond)} positions/s, ${formatCount(cacheHits)} cache hits.`;
     draw();
+    renderMoveList(depth);
   });
   ponderWorker.addEventListener("error", () => {
     if (runId !== ponderRunId) {
@@ -184,8 +210,11 @@ function shouldPonder() {
 
 function clearPondering() {
   analysisMoves = [];
+  analysisMoveScores = [];
+  hoveredMove = null;
   ponderRunId += 1;
   clearPonderWorker();
+  renderMoveList();
 }
 
 function clearPonderWorker() {
@@ -197,6 +226,80 @@ function clearPonderWorker() {
 
 function formatMove(move) {
   return `${window.Makyek.squareLabel(move.from)} to ${window.Makyek.squareLabel(move.to)}`;
+}
+
+function renderMoveList(depth) {
+  moveListElement.classList.toggle("hidden", !moveListEnabledInput.checked);
+  playAreaElement.classList.toggle("single-column", !moveListEnabledInput.checked);
+  moveListElement.replaceChildren();
+
+  if (!moveListEnabledInput.checked) {
+    return;
+  }
+
+  const heading = document.createElement("h2");
+  heading.textContent = depth ? `White depth ${depth}` : "White moves";
+  moveListElement.append(heading);
+
+  if (analysisMoveScores.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "move-list-empty";
+    empty.textContent = "No scores yet.";
+    moveListElement.append(empty);
+    return;
+  }
+
+  const list = document.createElement("ol");
+  analysisMoveScores.forEach((entry) => {
+    const item = document.createElement("li");
+    const moveText = document.createElement("span");
+    const scoreText = document.createElement("strong");
+
+    item.className = entry.isBest ? "best" : "";
+    moveText.textContent = formatMove(entry.move);
+    scoreText.textContent = formatScore(entry.score);
+    item.addEventListener("mouseenter", () => {
+      hoveredMove = entry.move;
+      draw();
+    });
+    item.addEventListener("mouseleave", () => {
+      hoveredMove = null;
+      draw();
+    });
+    item.addEventListener("focus", () => {
+      hoveredMove = entry.move;
+      draw();
+    });
+    item.addEventListener("blur", () => {
+      hoveredMove = null;
+      draw();
+    });
+    item.tabIndex = 0;
+    item.append(moveText, scoreText);
+    list.append(item);
+  });
+  moveListElement.append(list);
+}
+
+function sameMove(firstMove, secondMove) {
+  return (
+    firstMove.from.row === secondMove.from.row &&
+    firstMove.from.col === secondMove.from.col &&
+    firstMove.to.row === secondMove.to.row &&
+    firstMove.to.col === secondMove.to.col
+  );
+}
+
+function formatScore(score) {
+  if (score === Infinity) {
+    return "win";
+  }
+
+  if (score === -Infinity) {
+    return "loss";
+  }
+
+  return String(Math.round(score));
 }
 
 function formatRate(rate) {
@@ -239,5 +342,6 @@ function fillDepthSelect(selectElement) {
 
 statusElement.textContent = "Light to move.";
 draw();
+renderMoveList();
 scheduleAiMove();
 schedulePondering();
