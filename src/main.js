@@ -404,7 +404,7 @@ async function showStartScreen() {
   clearAiTimer();
   clearPondering();
   const level = await loadLevelByIndex(0);
-  const text = `Level 1. ${level.helpText || ""} Click to start.`;
+  const text = level.helpText || "";
 
   levelComplete = false;
   playAreaElement.classList.add("single-column");
@@ -422,6 +422,8 @@ async function showStartScreen() {
 function createStartButton(levelIndex, text) {
   const button = document.createElement("button");
   const image = document.createElement("img");
+  const textWrap = document.createElement("span");
+  const helpText = document.createElement("span");
   const label = document.createElement("span");
 
   button.className = "start-button";
@@ -429,8 +431,13 @@ function createStartButton(levelIndex, text) {
   button.setAttribute("aria-label", "Start game");
   image.src = "assets/images/Poster_regen.png";
   image.alt = "Regen Hotel";
-  label.textContent = text;
-  button.append(image, label);
+  textWrap.className = "start-text";
+  helpText.className = "start-help";
+  label.className = "start-label";
+  helpText.textContent = text;
+  label.textContent = "Click to start";
+  textWrap.append(helpText, label);
+  button.append(image, textWrap);
   button.addEventListener("click", () => startLevel(levelIndex));
 
   return button;
@@ -461,7 +468,7 @@ async function showNextLevelScreen() {
 async function showLevelIntroScreen(levelIndex) {
   const level = await loadLevelByIndex(levelIndex);
   const prefix = levelIndex === 0 ? "Play again. " : `Level ${levelIndex + 1}. `;
-  const text = `${prefix}${level.helpText || ""} Click to start.`;
+  const text = `${prefix}${level.helpText || ""}`;
 
   levelComplete = false;
   playAreaElement.classList.add("single-column");
