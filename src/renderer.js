@@ -4,6 +4,7 @@ const HOTEL_BOARD_COLUMNS = [7.6, 18.5, 29.8, 41.0, 58.8, 70.4, 81.9, 93.0];
 const HOTEL_BOARD_ROWS = [9.4, 23.3, 37.5, 51.6, 65.6, 79.2, 91.4];
 const FULL_BOARD_VIEWPORT = { left: 0, top: 0, width: 100, height: 100 };
 let currentViewport = FULL_BOARD_VIEWPORT;
+let draggedSquare = null;
 
 ["light", "dark"].forEach((piece) => {
   [false, true].forEach((isCaptured) => {
@@ -39,7 +40,7 @@ window.Makyek.renderBoard = function renderBoard({
       }
 
       const canMove = !inputBlocked && piece && game.canMoveFrom({ row, col });
-      addDropHandlers(square, onMove, inputBlocked);
+      addDropHandlers(square, onMove, inputBlocked, game);
 
       if (piece) {
         square.append(createPiece(piece, row, col, statusElement, canMove, onMoveStart));
@@ -139,6 +140,7 @@ function createPiece(piece, row, col, statusElement, canMove, onMoveStart) {
 
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("application/json", JSON.stringify({ row, col }));
+    draggedSquare = { row, col };
     pieceElement.classList.add("dragging");
     if (onMoveStart) {
       onMoveStart();
@@ -148,6 +150,8 @@ function createPiece(piece, row, col, statusElement, canMove, onMoveStart) {
 
   pieceElement.addEventListener("dragend", () => {
     pieceElement.classList.remove("dragging");
+    draggedSquare = null;
+    clearCapturePreview(pieceElement.closest(".board"));
   });
 
   return pieceElement;
@@ -166,7 +170,7 @@ function getPieceImage(piece, isCaptured) {
   return `assets/images/${imageName}`;
 }
 
-function addDropHandlers(square, onMove, inputBlocked) {
+function addDropHandlers(square, onMove, inputBlocked, game) {
   square.addEventListener("dragover", (event) => {
     if (inputBlocked) {
       return;
@@ -174,10 +178,13 @@ function addDropHandlers(square, onMove, inputBlocked) {
 
     event.preventDefault();
     square.classList.add("drop-target");
+    clearCapturePreview(square.parentElement);
+    previewCaptures(square, game, draggedSquare);
   });
 
   square.addEventListener("dragleave", () => {
     square.classList.remove("drop-target");
+    clearCapturePreview(square.parentElement);
   });
 
   square.addEventListener("drop", (event) => {
@@ -187,6 +194,7 @@ function addDropHandlers(square, onMove, inputBlocked) {
 
     event.preventDefault();
     square.classList.remove("drop-target");
+    clearCapturePreview(square.parentElement);
 
     const from = readDragData(event);
     const to = {
@@ -198,6 +206,79 @@ function addDropHandlers(square, onMove, inputBlocked) {
       onMove(from, to);
     }
   });
+}
+
+function previewCaptures(square, game, from) {
+  const capturedSquares = getPreviewCapturedSquares(game, from, {
+    row: Number(square.dataset.row),
+    col: Number(square.dataset.col),
+  });
+
+  capturedSquares.forEach((capturedSquare) => {
+    const pieceElement = findSquare(square.parentElement, capturedSquare)?.querySelector(".piece");
+    const pieceImage = pieceElement?.querySelector(".piece-image");
+
+    if (!pieceElement || !pieceImage) {
+      return;
+    }
+
+    pieceImage.src = getPieceImage(pieceElement.dataset.player, true);
+    pieceElement.classList.add("capture-preview-piece");
+  });
+}
+
+function clearCapturePreview(boardElement) {
+  if (!boardElement) {
+    return;
+  }
+
+  boardElement.querySelectorAll(".capture-preview-piece").forEach((pieceElement) => {
+    const pieceImage = pieceElement.querySelector(".piece-image");
+
+    if (pieceImage) {
+      pieceImage.src = getPieceImage(pieceElement.dataset.player, false);
+    }
+
+    pieceElement.classList.remove("capture-preview-piece");
+  });
+}
+
+function getPreviewCapturedSquares(game, from, to) {
+  if (!from || !isSquareOnBoard(from) || !isSquareOnBoard(to)) {
+    return [];
+  }
+
+  const piece = game.board[from.row]?.[from.col];
+
+  if (!piece || piece === "#" || game.board[to.row][to.col]) {
+    return [];
+  }
+
+  const isLegalMove = window.Makyek
+    .getLegalMoves(game.board, from)
+    .some((move) => sameSquare(move, to));
+
+  if (!isLegalMove) {
+    return [];
+  }
+
+  return window.Makyek.applyMove(game.board, { from, to }, piece).capturedSquares;
+}
+
+function isSquareOnBoard(square) {
+  return (
+    square &&
+    Number.isInteger(square.row) &&
+    Number.isInteger(square.col) &&
+    square.row >= 0 &&
+    square.row < window.Makyek.BOARD_ROWS &&
+    square.col >= 0 &&
+    square.col < window.Makyek.BOARD_COLS
+  );
+}
+
+function sameSquare(firstSquare, secondSquare) {
+  return firstSquare.row === secondSquare.row && firstSquare.col === secondSquare.col;
 }
 
 function findSquare(boardElement, square) {

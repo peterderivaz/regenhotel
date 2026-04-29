@@ -366,6 +366,10 @@ button {
   filter: drop-shadow(0 0 8px rgba(240, 216, 121, 0.9));
 }
 
+.piece.capture-preview-piece {
+  filter: drop-shadow(0 0 10px rgba(217, 75, 61, 0.9));
+}
+
 .piece.ai-source-piece {
   opacity: 0;
 }
