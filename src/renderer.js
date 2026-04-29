@@ -3,6 +3,13 @@ window.Makyek = window.Makyek || {};
 const HOTEL_BOARD_COLUMNS = [7.6, 18.5, 29.8, 41.0, 58.8, 70.4, 81.9, 93.0];
 const HOTEL_BOARD_ROWS = [9.4, 23.3, 37.5, 51.6, 65.6, 79.2, 91.4];
 
+["light", "dark"].forEach((piece) => {
+  [false, true].forEach((isCaptured) => {
+    const image = new Image();
+    image.src = getPieceImage(piece, isCaptured);
+  });
+});
+
 window.Makyek.renderBoard = function renderBoard({
   boardElement,
   statusElement,
@@ -104,12 +111,11 @@ function createPiece(piece, row, col, statusElement, canMove, onMoveStart) {
   pieceElement.disabled = !canMove;
   pieceElement.dataset.row = row;
   pieceElement.dataset.col = col;
+  pieceElement.dataset.player = piece;
   pieceElement.setAttribute("aria-label", `${piece} piece on ${squareLabel(row, col)}`);
   pieceElement.title = `${piece} piece`;
   pieceImage.className = "piece-image";
   pieceImage.src = getPieceImage(piece, false);
-  pieceImage.dataset.normalSrc = getPieceImage(piece, false);
-  pieceImage.dataset.capturedSrc = getPieceImage(piece, true);
   pieceImage.alt = "";
   pieceImage.draggable = false;
   pieceElement.append(pieceImage);
@@ -200,7 +206,7 @@ function markCapturedPieces(boardElement, capturedSquares) {
       const capturedImage = capturedPiece.querySelector(".piece-image");
 
       if (capturedImage) {
-        capturedImage.src = capturedImage.dataset.capturedSrc;
+        capturedImage.src = getPieceImage(capturedPiece.dataset.player, true);
       }
 
       capturedPiece.classList.add("captured-piece");
