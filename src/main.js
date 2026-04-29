@@ -422,9 +422,10 @@ function showStartScreen() {
   clearAiTimer();
   clearPondering();
   levelComplete = false;
+  playAreaElement.classList.add("single-column");
+  playAreaElement.classList.add("start-mode");
   gameHeaderElement.hidden = true;
   controlsElement.hidden = true;
-  playAreaElement.classList.add("single-column");
   moveListElement.classList.add("hidden");
   boardElement.classList.add("start-screen");
   boardElement.style.setProperty("--board-aspect", "9 / 16");
@@ -451,10 +452,51 @@ function createStartButton() {
 }
 
 async function startFirstLevel() {
+  const startRect = boardElement.getBoundingClientRect();
+  const overlay = createPosterTransitionOverlay(startRect);
+
   gameHeaderElement.hidden = false;
   controlsElement.hidden = false;
   levelSelect.selectedIndex = 0;
   await loadSelectedLevel();
+  await animateStartPosterToHeader(overlay);
+}
+
+function createPosterTransitionOverlay(startRect) {
+  const overlay = document.createElement("div");
+  const image = document.createElement("img");
+
+  overlay.className = "poster-transition";
+  image.src = "assets/images/Poster_regen.png";
+  image.alt = "";
+  overlay.append(image);
+  document.body.append(overlay);
+  setPosterTransitionRect(overlay, startRect);
+
+  return overlay;
+}
+
+function animateStartPosterToHeader(overlay) {
+  const endRect = gameHeaderElement.getBoundingClientRect();
+
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => {
+      overlay.classList.add("poster-transition-active");
+      setPosterTransitionRect(overlay, endRect);
+    });
+
+    window.setTimeout(() => {
+      overlay.remove();
+      resolve();
+    }, 720);
+  });
+}
+
+function setPosterTransitionRect(element, rect) {
+  element.style.left = `${rect.left}px`;
+  element.style.top = `${rect.top}px`;
+  element.style.width = `${rect.width}px`;
+  element.style.height = `${rect.height}px`;
 }
 
 async function loadNextLevel() {
@@ -483,6 +525,7 @@ async function loadSelectedLevel() {
   clearAiTimer();
   clearPondering();
   levelComplete = false;
+  playAreaElement.classList.remove("start-mode");
   gameHeaderElement.hidden = false;
   controlsElement.hidden = false;
   statusElement.textContent = "Loading level...";
