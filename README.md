@@ -2,7 +2,9 @@
 
 A browser-based Mak-yek game built with plain HTML, CSS, JavaScript, and image assets.
 
-## Running
+Play at https://peterderivaz.github.io/regenhotel/
+
+## Running locally
 
 Serve the project directory with a local web server, then open `index.html`.
 White thinking uses a Web Worker, which many browsers block from `file://` pages.
